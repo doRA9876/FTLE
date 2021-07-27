@@ -2,6 +2,10 @@
 using System.Numerics;
 
 
+/*
+Using MAC Grid
+*/
+
 namespace FTLE
 {
   class Program
@@ -12,7 +16,7 @@ namespace FTLE
     static int fileNum = 1000;
 
     static int velResolution = 32;
-    static int ftleResolution = 64;
+    static int ftleResolution = 32;
 
     static int direction = BACKWARD;
 
@@ -113,8 +117,8 @@ namespace FTLE
 
     static void Trace2D(int t, ref Vector3 pos)
     {
-      LinearPrediction(t, ref pos);
-      // RungeKutta(t, ref pos);
+      // LinearPrediction(t, ref pos);
+      RungeKutta(t, ref pos);
 
       void LinearPrediction(int t, ref Vector3 pos)
       {
@@ -128,50 +132,83 @@ namespace FTLE
       {
         float dt = delta_t * direction;
         Vector3 k1 = Lerp2D(t, pos);
-        Vector3 x2 = pos + k1 * dt;
+        Vector3 x2 = pos + k1 * dt / 2;
         Vector3 k2 = Lerp2D((int)(t + dt / 2), x2);
         Vector3 x3 = pos + k2 * dt / 2;
         Vector3 k3 = Lerp2D((int)(t + dt / 2), x3);
-        Vector3 x4 = pos + k3 * dt / 2;
-        Vector3 k4 = Lerp2D((int)(t + dt / 2), x4);
+        Vector3 x4 = pos + k3 * dt;
+        Vector3 k4 = Lerp2D((int)(t + dt), x4);
         pos = pos + (k1 + k2 + k3 + k4) / 6 * dt;
       }
     }
 
     static Vector3 Lerp2D(int t, Vector3 pos)
     {
-      float m = (float)(velResolution - 1) / ftleResolution;
-      int x0 = (int)(pos.X * m);
-      int x1 = (int)(pos.X * m) + 1;
-      int y0 = (int)(pos.Y * m);
-      int y1 = (int)(pos.Y * m) + 1;
-
-      FixPositionIndex(ref x0);
-      FixPositionIndex(ref x1);
-      FixPositionIndex(ref y0);
-      FixPositionIndex(ref y1);
-
-      // Console.WriteLine("x:{0} y:{1} z:{2}", pos.X, pos.Y, pos.Z);
-      // Console.WriteLine("x0:{0} x1:{1} y0:{2} y1:{3}", x0, x1, y0, y1);
-
-      Vector3 v00 = velocityField[t][x0, y0, 0];
-      Vector3 v10 = velocityField[t][x1, y0, 0];
-      Vector3 v01 = velocityField[t][x0, y1, 0];
-      Vector3 v11 = velocityField[t][x1, y1, 0];
-
-      float p_t = (pos.X - x0) / (x1 - x0);
-      float p_s = (pos.Y - y0) / (y1 - y0);
-
-      float vx = (1 - p_s) * (1 - p_t) * v00.X + (1 - p_s) * p_t * v10.X + p_s * (1 - p_t) * v01.X + p_s * p_t * v11.X;
-      float vy = (1 - p_s) * (1 - p_t) * v00.Y + (1 - p_s) * p_t * v10.Y + p_s * (1 - p_t) * v01.Y + p_s * p_t * v11.Y;
-
-      return new Vector3(vx, vy, 0);
-
-      void FixPositionIndex(ref int index)
+      int domain = GetLerpDomain(pos);
+      if (domain == 0)
       {
-        if (0 <= index && index <= velResolution - 1) return;
-        if (index < 0) index = 0;
-        else index = velResolution - 1;
+        Console.WriteLine("x:{0} y:{1} z:{2}", pos.X, pos.Y, pos.Z);
+
+        int x0 = (int)Math.Round(pos.X);
+        int y0 = (int)Math.Round(pos.Y);
+
+        int x1, y1;
+
+        if ((pos.X - x0) < 0)
+          x1 = x0 - 1;
+        else
+          x1 = x0 + 1;
+
+        if (x1 < 0) x1 = 0;
+        if (ftleResolution - 1 < x1) x1 = ftleResolution - 1;
+
+        if ((pos.Y - y0) < 0)
+          y1 = y0 - 1;
+        else
+          y1 = y0 + 1;
+
+        if (y1 < 0) y1 = 0;
+        if (ftleResolution - 1 < y1) y1 = ftleResolution - 1;
+
+        Vector3 v00 = velocityField[t][x0, y0, 0];
+        Vector3 v10 = velocityField[t][x1, y0, 0];
+        Vector3 v01 = velocityField[t][x0, y1, 0];
+
+        float up = Math.Abs(pos.X - x1);
+        float vp = Math.Abs(pos.Y - y1);
+
+        return v00 + up * (v10 - v00) + vp * (v01 - v00);
+      }
+      else
+      {
+        return Vector3.Zero;
+      }
+
+      /* Domain
+        2 \      1         \ 2
+      --------------------------
+          \                \
+          \ velocity field \
+        1 \        0       \  1
+          \                \
+          \                \
+      --------------------------
+        2 \        1       \  2
+      */
+      int GetLerpDomain(Vector3 pos)
+      {
+        if (0 <= pos.X && pos.X <= (ftleResolution - 1) && 0 <= pos.Y && pos.Y <= (ftleResolution - 1))
+          return 0;
+        else
+        {
+          if (pos.X < 0 || (ftleResolution - 1) < pos.X)
+            if (pos.Y < 0 || (ftleResolution - 1) < pos.Y)
+              return 2;
+            else
+              return 1;
+          else
+            return 1;
+        }
       }
     }
   }
