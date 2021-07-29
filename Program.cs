@@ -16,12 +16,12 @@ namespace FTLE
     static int fileNum = 1000;
 
     static int velResolution = 32;
-    static int ftleResolution = 34;
+    static int ftleResolution = 33;
 
     static int direction = BACKWARD;
 
     static float delta_t = 2f;
-    static float integral_T = 2;
+    static float integral_T = 10;
     static float perturbation = 0.1f;
 
     static Vector3[][,,] velocityField;
@@ -83,16 +83,15 @@ namespace FTLE
           // for (int i = 0; i < 1; i++)
           {
             if (t - i < 0) continue;
-            // if (isInRegion(pl)) Trace2D(t - i, ref pl);
-            // if (isInRegion(pr)) Trace2D(t - i, ref pr);
-            // if (isInRegion(pu)) Trace2D(t - i, ref pu);
-            // if (isInRegion(pd)) Trace2D(t - i, ref pd);
-
             Trace2D(t - i, ref pl);
             Trace2D(t - i, ref pr);
             Trace2D(t - i, ref pu);
             Trace2D(t - i, ref pd);
           }
+          // Console.WriteLine(pl);
+          // Console.WriteLine(pr);
+          // Console.WriteLine(pu);
+          // Console.WriteLine(pd);
           float[,] flowmap2D = new float[2, 2];
           /*
           0,0 0,1
@@ -142,21 +141,24 @@ namespace FTLE
 
     static Vector3 Lerp2D(int t, Vector3 pos)
     {
-      int x0 = (int)Math.Round(pos.X / (ftleResolution - 1) * (velResolution - 1));
-      int y0 = (int)Math.Round(pos.Y / (ftleResolution - 1) * (velResolution - 1));
+      float x = pos.X / (ftleResolution - 1) * (velResolution - 1);
+      float y = pos.Y / (ftleResolution - 1) * (velResolution - 1);
+      int x0 = (int)Math.Round(x);
+      int y0 = (int)Math.Round(y);
       int neiborPoint = GetNeighborPoint(x0, y0);
-      // Console.WriteLine("x : {0}   y : {1}", pos.X, pos.Y);
+
+      // Console.WriteLine("x : {0}   y : {1}", x, y);
       // Console.WriteLine("x0 : {0}    y0 : {1}", x0, y0);
       // Console.WriteLine("p:{0}", neiborPoint);
       if (neiborPoint == 3)
       {
         int x1, y1;
-        if ((pos.X - x0) < 0)
+        if ((x - x0) < 0)
           x1 = x0 - 1;
         else
           x1 = x0 + 1;
 
-        if ((pos.Y - y0) < 0)
+        if ((y - y0) < 0)
           y1 = y0 - 1;
         else
           y1 = y0 + 1;
@@ -165,8 +167,8 @@ namespace FTLE
         Vector3 v10 = velocityField[t][x1, y0, 0];
         Vector3 v01 = velocityField[t][x0, y1, 0];
 
-        float delta_x = Math.Abs(pos.X - x1);
-        float delta_y = Math.Abs(pos.Y - y1);
+        float delta_x = Math.Abs(x - x1);
+        float delta_y = Math.Abs(y - y1);
         float dx = Math.Abs(x1 - x0);
         float dy = Math.Abs(y1 - y0);
 
@@ -189,7 +191,7 @@ namespace FTLE
             x1 = velResolution - 2;
           }
 
-          if ((y0 - pos.Y) < 0)
+          if ((y0 - y) < 0)
             y1 = y0 + 1;
           else
             y1 = y0 - 1;
@@ -207,7 +209,7 @@ namespace FTLE
             y1 = velResolution - 2;
           }
 
-          if ((x0 - pos.Y) < 0)
+          if ((x0 - x) < 0)
             x1 = x0 + 1;
           else
             x1 = x0 - 1;
@@ -216,15 +218,22 @@ namespace FTLE
         Vector3 v01 = velocityField[t][x0, y1, 0];
         Vector3 v10 = velocityField[t][x1, y0, 0];
 
-        float delta_x = Math.Abs(pos.X - x1);
-        float delta_y = Math.Abs(pos.Y - y1);
+        float delta_x = Math.Abs(x - x1);
+        float delta_y = Math.Abs(y - y1);
         float dx = Math.Abs(x1 - x0);
         float dy = Math.Abs(y1 - y0);
+
+        // Console.WriteLine("x0 : {0}, y0 : {1}", x0, y0);
+        // Console.WriteLine("pos.X : {0}, x1 : {1}", pos.X, x1);
+        // Console.WriteLine("pos.Y : {0}, y1 : {1}", pos.Y, y1);
+        // Console.WriteLine(v01);
+        // Console.WriteLine("x0:{0} y0:{1} x1:{2} y1:{3}", x0, y0, x1, y1);
 
         return v00 + (v00 - v10) / dx * delta_x + (v00 - v01) / dy * delta_y;
       }
 
-      if (neiborPoint == 1)
+      // if (neiborPoint == 1)
+      else
       {
         int x1, y1;
         if (x0 <= 0)
@@ -251,14 +260,14 @@ namespace FTLE
         Vector3 v01 = velocityField[t][x0, y1, 0];
         Vector3 v10 = velocityField[t][x1, y0, 0];
 
-        float delta_x = Math.Abs(pos.X - x1);
-        float delta_y = Math.Abs(pos.Y - y1);
+        float delta_x = Math.Abs(x - x1);
+        float delta_y = Math.Abs(y - y1);
         float dx = Math.Abs(x1 - x0);
         float dy = Math.Abs(y1 - y0);
 
         return v00 + (v00 - v10) / dx * delta_x + (v00 - v01) / dy * delta_y;
       }
-      return Vector3.Zero;
+      // return Vector3.Zero;
 
       /*
       velocity field
