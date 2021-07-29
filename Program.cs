@@ -16,7 +16,7 @@ namespace FTLE
     static int fileNum = 1000;
 
     static int velResolution = 32;
-    static int ftleResolution =32;
+    static int ftleResolution = 34;
 
     static int direction = BACKWARD;
 
@@ -83,10 +83,15 @@ namespace FTLE
           // for (int i = 0; i < 1; i++)
           {
             if (t - i < 0) continue;
-            if (isInRegion(pl)) Trace2D(t - i, ref pl);
-            if (isInRegion(pr)) Trace2D(t - i, ref pr);
-            if (isInRegion(pu)) Trace2D(t - i, ref pu);
-            if (isInRegion(pd)) Trace2D(t - i, ref pd);
+            // if (isInRegion(pl)) Trace2D(t - i, ref pl);
+            // if (isInRegion(pr)) Trace2D(t - i, ref pr);
+            // if (isInRegion(pu)) Trace2D(t - i, ref pu);
+            // if (isInRegion(pd)) Trace2D(t - i, ref pd);
+
+            Trace2D(t - i, ref pl);
+            Trace2D(t - i, ref pr);
+            Trace2D(t - i, ref pu);
+            Trace2D(t - i, ref pd);
           }
           float[,] flowmap2D = new float[2, 2];
           /*
@@ -103,29 +108,22 @@ namespace FTLE
           tensor2D[1, 0] = tensor2D[0, 1] = flowmap2D[0, 0] * flowmap2D[1, 0] + flowmap2D[0, 1] * flowmap2D[1, 1];
           tensor2D[1, 1] = (float)Math.Pow(flowmap2D[1, 1], 2) + (float)Math.Pow(flowmap2D[0, 1], 2);
 
-          ftle[x, y, 0] = (float)Math.Log(Eigen.GetMaxEigenValue2x2(tensor2D)) / Math.Abs(integral_T);
+          ftle[x, y, 0] = (float)Math.Log(Eigen.GetMaxEigenValue2x2(tensor2D)) / Math.Abs(integral_T / delta_t);
         }
       }
       return ftle;
     }
 
-    static bool isInRegion(Vector3 p)
-    {
-      if (p.X < 0 || p.Y < 0 || p.Z < 0 || ftleResolution < p.X || ftleResolution < p.Y || ftleResolution < p.Z) return false;
-      else return true;
-    }
-
     static void Trace2D(int t, ref Vector3 pos)
     {
-      // LinearPrediction(t, ref pos);
-      RungeKutta(t, ref pos);
+      LinearPrediction(t, ref pos);
+      // RungeKutta(t, ref pos);
 
       void LinearPrediction(int t, ref Vector3 pos)
       {
         float dt = delta_t * direction;
         Vector3 vel = Lerp2D(t, pos);
-        pos.X = pos.X + vel.X * dt;
-        pos.Y = pos.Y + vel.Y * dt;
+        pos = pos + vel * dt;
       }
 
       void RungeKutta(int t, ref Vector3 pos)
@@ -144,50 +142,11 @@ namespace FTLE
 
     static Vector3 Lerp2D(int t, Vector3 pos)
     {
-      // int domain = GetLerpDomain(pos);
-      // if (domain == 0)
-      // {
-      //   // Console.WriteLine("x:{0} y:{1} z:{2}", pos.X, pos.Y, pos.Z);
-
-      //   int x0 = (int)Math.Round(pos.X);
-      //   int y0 = (int)Math.Round(pos.Y);
-
-      //   int x1, y1;
-
-      //   if ((pos.X - x0) < 0)
-      //     x1 = x0 - 1;
-      //   else
-      //     x1 = x0 + 1;
-
-      //   if (x1 < 0) x1 = 0;
-      //   if (ftleResolution - 1 < x1) x1 = ftleResolution - 1;
-
-      //   if ((pos.Y - y0) < 0)
-      //     y1 = y0 - 1;
-      //   else
-      //     y1 = y0 + 1;
-
-      //   if (y1 < 0) y1 = 0;
-      //   if (ftleResolution - 1 < y1) y1 = ftleResolution - 1;
-
-      //   Vector3 v00 = velocityField[t][x0, y0, 0];
-      //   Vector3 v10 = velocityField[t][x1, y0, 0];
-      //   Vector3 v01 = velocityField[t][x0, y1, 0];
-
-      //   float up = Math.Abs(pos.X - x1);
-      //   float vp = Math.Abs(pos.Y - y1);
-
-      //   return v00 + up * (v10 - v00) + vp * (v01 - v00);
-      // }
-      // else
-      // {
-      //   return Vector3.Zero;
-      // }
-
-      int x0 = (int)Math.Round(pos.X / (ftleResolution - 1) * velResolution);
-      int y0 = (int)Math.Round(pos.Y / (ftleResolution - 1) * velResolution);
+      int x0 = (int)Math.Round(pos.X / (ftleResolution - 1) * (velResolution - 1));
+      int y0 = (int)Math.Round(pos.Y / (ftleResolution - 1) * (velResolution - 1));
       int neiborPoint = GetNeighborPoint(x0, y0);
-      // Console.WriteLine("x:{0} y:{1} z:{2}", pos.X, pos.Y, pos.Z);
+      // Console.WriteLine("x : {0}   y : {1}", pos.X, pos.Y);
+      // Console.WriteLine("x0 : {0}    y0 : {1}", x0, y0);
       // Console.WriteLine("p:{0}", neiborPoint);
       if (neiborPoint == 3)
       {
@@ -217,9 +176,9 @@ namespace FTLE
       if (neiborPoint == 2)
       {
         int x1, y1;
-        if (x0 < 0 || (velResolution - 1) < x0)
+        if (x0 <= 0 || (velResolution - 1) <= x0)
         {
-          if (x0 < 0)
+          if (x0 <= 0)
           {
             x0 = 0;
             x1 = 1;
@@ -237,7 +196,7 @@ namespace FTLE
         }
         else
         {
-          if (y0 < 0)
+          if (y0 <= 0)
           {
             y0 = 0;
             y1 = 1;
@@ -268,7 +227,7 @@ namespace FTLE
       if (neiborPoint == 1)
       {
         int x1, y1;
-        if (x0 < 0)
+        if (x0 <= 0)
         {
           x0 = 0;
           x1 = 1;
@@ -278,7 +237,7 @@ namespace FTLE
           x0 = velResolution - 1;
           x1 = velResolution - 2;
         }
-        if (y0 < 0)
+        if (y0 <= 0)
         {
           y0 = 0;
           y1 = 1;
@@ -301,35 +260,8 @@ namespace FTLE
       }
       return Vector3.Zero;
 
-      /* Domain
-        3 \      2         \ 3
-      --------------------------
-          \                \
-          \ velocity field \
-        1 \        0       \  1
-          \                \
-          \                \
-      --------------------------
-        3 \        2       \ 3
-      */
-      int GetLerpDomain(Vector3 pos)
-      {
-        if (0 <= pos.X && pos.X <= (ftleResolution - 1) && 0 <= pos.Y && pos.Y <= (ftleResolution - 1))
-          return 0;
-        else
-        {
-          if (pos.X < 0 || (ftleResolution - 1) < pos.X)
-            if (pos.Y < 0 || (ftleResolution - 1) < pos.Y)
-              return 2;
-            else
-              return 1;
-          else
-            return 1;
-        }
-      }
-
       /*
-      velociyt field
+      velocity field
       1 2 2 ... 2 2 1
       2 3 3 ... 3 3 2
       2 3 3 ... 3 3 2
@@ -338,7 +270,6 @@ namespace FTLE
       2 3 3 ... 3 3 2
       1 2 2 ... 2 2 1
       */
-
       int GetNeighborPoint(int x0, int y0)
       {
         if (0 < x0 && x0 < (velResolution - 1) && 0 < y0 && y0 < (velResolution - 1)) return 3;
