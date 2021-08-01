@@ -1,6 +1,6 @@
 using System;
 
-namespace FTLE
+namespace Arihara.GuideSmoke
 {
   static class Eigen
   {
