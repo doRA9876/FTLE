@@ -6,7 +6,7 @@ using System.Numerics;
 Using MAC Grid
 */
 
-namespace FTLE
+namespace Arihara.GuideSmoke
 {
   public class FTLE
   {
@@ -16,36 +16,56 @@ namespace FTLE
     const int fileNum = 1000;
 
     const int velResolution = 32;
-    const int ftleResolution = 64;
+    const int ftleResolution = 128;
 
-    const int direction = BACKWARD;
+    int direction = BACKWARD;
 
     const int delta_t = 1;
-    const int integral_T = 5;
-    const float perturbation = 0.1f;
+    const int integral_T = 10;
+    // const float perturbation = 0.1f;
 
+    Vector3[,,] originalPosition;
     Vector3[][,,] velocityField;
     float[][,,] ftleField;
 
     int x_min, x_max, y_min, y_max;
 
-    public FTLE()
+
+    public FTLE(string folderPath, int d)
     {
+      Constructor(folderPath, d);
+    }
+
+    public FTLE(string folderPath)
+    {
+      Constructor(folderPath, FORWARD);
+    }
+
+    private void Constructor(string folderPath, int d)
+    {
+      if (d > 0) direction = FORWARD;
+      else direction = BACKWARD;
+
       velocityField = new Vector3[fileNum][,,];
       ftleField = new float[fileNum][,,];
       x_min = 0; y_min = 0;
-      x_max = ftleResolution - 1; y_max = ftleResolution - 1;
+      x_max = velResolution - 1; y_max = velResolution - 1;
 
       for (int n = 0; n < fileNum; n++)
       {
-        string path = string.Format("./data1/vel-{0}.txt", n);
-        velocityField[n] = FileIO.ReadFile(path);
+        string path = string.Format(folderPath + "/vel-{0}.txt", n);
+        velocityField[n] = FileIO.ReadVelocityFile(path);
       }
+    }
 
-      int time = 500;
-      ftleField[time] = FTLE2D(time);
+    public void CalcFTLE(int t)
+    {
+      ftleField[t] = FTLE2D(t);
+    }
 
-      FileIO.WriteFile2D(time, ftleField[time]);
+    public void WriteFTLE(string path, int t)
+    {
+      FileIO.WriteFTLEFile(path, t, originalPosition, ftleField[t], ftleResolution, ftleResolution, 1);
     }
 
     float[,,] FTLE2D(int t)
@@ -55,12 +75,16 @@ namespace FTLE
       Vector3[,,] new_pos = new Vector3[ftleResolution, ftleResolution, 1];
       bool[,,] leftDomain = new bool[ftleResolution, ftleResolution, 1];
       bool[,,] calcFTLE = new bool[ftleResolution, ftleResolution, 1];
+      originalPosition = new Vector3[ftleResolution, ftleResolution, 1];
       for (int ix = 0; ix < ftleResolution; ix++)
       {
         for (int iy = 0; iy < ftleResolution; iy++)
         {
-          pos[ix, iy, 0] = new Vector3(ix, iy, 0);
-          new_pos[ix, iy, 0] = new Vector3(ix, iy, 0);
+          float x = (float)ix * (velResolution - 1) / (ftleResolution - 1);
+          float y = (float)iy * (velResolution - 1) / (ftleResolution - 1);
+          originalPosition[ix, iy, 0] = new Vector3(x, y, 0);
+          pos[ix, iy, 0] = new Vector3(x, y, 0);
+          new_pos[ix, iy, 0] = new Vector3(x, y, 0);
           leftDomain[ix, iy, 0] = false;
           calcFTLE[ix, iy, 0] = false;
         }
@@ -78,7 +102,6 @@ namespace FTLE
           for (int y = 0; y < ftleResolution; y++)
           {
             new_pos[x, y, 0] = Trace2D(t0, t1, delta_t, pos[x, y, 0]);
-            // Console.WriteLine(new_pos[x, y, 0]);
           }
         }
 
@@ -142,7 +165,7 @@ namespace FTLE
       {
         for (int y = 0; y < ftleResolution; y++)
         {
-          if (calcFTLE[x,y,0] == false)
+          if (calcFTLE[x, y, 0] == false)
           {
             ftle[x, y, 0] = CalculateFTLE(pos, x, y);
             calcFTLE[x, y, 0] = true;
@@ -154,12 +177,13 @@ namespace FTLE
 
     float CalculateFTLE(Vector3[,,] flowmap, int ix, int iy)
     {
-      if (((ix - 1) * (ix - x_max)) < 0 && ((iy - 1) * (iy - y_max) < 0))
+      if ((ix * (ix - (ftleResolution - 1))) < 0 && (iy * (iy - (ftleResolution - 1))) < 0)
       {
-        float a00 = (flowmap[ix + 1, iy, 0].X - flowmap[ix - 1, iy, 0].X) / 2;
-        float a01 = (flowmap[ix, iy + 1, 0].X - flowmap[ix, iy - 1, 0].X) / 2;
-        float a10 = (flowmap[ix + 1, iy, 0].Y - flowmap[ix - 1, iy, 0].Y) / 2;
-        float a11 = (flowmap[ix, iy + 1, 0].Y - flowmap[ix, iy - 1, 0].Y) / 2;
+        float scale = (float)velResolution / ftleResolution;
+        float a00 = (flowmap[ix + 1, iy, 0].X - flowmap[ix - 1, iy, 0].X) / (2 * scale);
+        float a01 = (flowmap[ix, iy + 1, 0].X - flowmap[ix, iy - 1, 0].X) / (2 * scale);
+        float a10 = (flowmap[ix + 1, iy, 0].Y - flowmap[ix - 1, iy, 0].Y) / (2 * scale);
+        float a11 = (flowmap[ix, iy + 1, 0].Y - flowmap[ix, iy - 1, 0].Y) / (2 * scale);
 
         float[,] tensor2D = new float[2, 2];
         tensor2D[0, 0] = (float)Math.Pow(a00, 2) + (float)Math.Pow(a01, 2);
@@ -167,9 +191,9 @@ namespace FTLE
         tensor2D[1, 1] = (float)Math.Pow(a11, 2) + (float)Math.Pow(a10, 2);
 
         double result = (float)Math.Log(Eigen.GetMaxEigenValue2x2(tensor2D)) / Math.Abs(integral_T / delta_t);
-        
-        if(result != double.NaN) return (float)result;
-        else return -1;
+
+        if (result != double.NegativeInfinity) return (float)result;
+        else return 0;
       }
       else
       {
@@ -181,9 +205,8 @@ namespace FTLE
     {
       int delta = (t_end - t_start);
 
-      // Console.WriteLine(pos);
-      // Vector3 velocity = Lerp2D(t_start, pos);
-      Vector3 velocity = RungeKutta(t_start, pos);
+      Vector3 velocity = Lerp2D(t_start, pos);
+      // Vector3 velocity = RungeKutta(t_start, pos);
       return pos + velocity * direction * delta * h;
 
       Vector3 RungeKutta(int t, Vector3 pos)
@@ -202,15 +225,12 @@ namespace FTLE
 
     Vector3 Lerp2D(int t, Vector3 pos)
     {
-      float x = pos.X / (ftleResolution - 1) * (velResolution - 1);
-      float y = pos.Y / (ftleResolution - 1) * (velResolution - 1);
+      float x = pos.X;
+      float y = pos.Y;
       int x0 = (int)Math.Round(x);
       int y0 = (int)Math.Round(y);
       int neiborPoint = GetNeighborPoint(x0, y0);
 
-      // Console.WriteLine("x : {0}   y : {1}", x, y);
-      // Console.WriteLine("x0 : {0}    y0 : {1}", x0, y0);
-      // Console.WriteLine("p:{0}", neiborPoint);
       if (neiborPoint == 3)
       {
         int x1, y1;
@@ -224,9 +244,9 @@ namespace FTLE
         else
           y1 = y0 + 1;
 
-        Vector3 v00 = velocityField[t][y0, x0, 0];
-        Vector3 v10 = velocityField[t][y0, x1, 0];
-        Vector3 v01 = velocityField[t][y1, x0, 0];
+        Vector3 v00 = velocityField[t][x0, y0, 0];
+        Vector3 v10 = velocityField[t][x1, y0, 0];
+        Vector3 v01 = velocityField[t][x0, y1, 0];
 
         float delta_x = Math.Abs(x - x1);
         float delta_y = Math.Abs(y - y1);
@@ -284,17 +304,9 @@ namespace FTLE
         float dx = Math.Abs(x1 - x0);
         float dy = Math.Abs(y1 - y0);
 
-        // Console.WriteLine("x0 : {0}, y0 : {1}", x0, y0);
-        // Console.WriteLine("pos.X : {0}, x1 : {1}", pos.X, x1);
-        // Console.WriteLine("pos.Y : {0}, y1 : {1}", pos.Y, y1);
-        // Console.WriteLine(v01);
-        // Console.WriteLine("x0:{0} y0:{1} x1:{2} y1:{3}", x0, y0, x1, y1);
-
-        // return v00 + (v00 - v10) / dx * delta_x + (v00 - v01) / dy * delta_y;
         return Vector3.Zero;
       }
 
-      // if (neiborPoint == 1)
       else
       {
         int x1, y1;
@@ -328,10 +340,8 @@ namespace FTLE
         float dx = Math.Abs(x1 - x0);
         float dy = Math.Abs(y1 - y0);
 
-        // return v00 + (v00 - v10) / dx * delta_x + (v00 - v01) / dy * delta_y;
         return Vector3.Zero;
       }
-      // return Vector3.Zero;
 
       /*
       velocity field

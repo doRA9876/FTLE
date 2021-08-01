@@ -2,11 +2,11 @@ using System;
 using System.IO;
 using System.Numerics;
 
-namespace FTLE
+namespace Arihara.GuideSmoke
 {
   static class FileIO
   {
-    public static Vector3[,,] ReadFile(string path)
+    public static Vector3[,,] ReadVelocityFile(string path)
     {
       if (!File.Exists(path))
       {
@@ -28,13 +28,6 @@ namespace FTLE
       for (int i = 0; i < culums.Length - 1; i++)
       {
         datas[i] = culums[i].Split(',');
-
-        // for (int j = 0; j < 6; j++)
-        // {
-        // 	// Console.Write(string.Format("i:{0}, j:{1}", i, j) + datas[i][j] + " ");
-        // 	Console.Write(datas[i][j] + " ");
-        // }
-        // Console.WriteLine();
       }
 
       int maxX = 0, maxY = 0, maxZ = 0;
@@ -58,29 +51,37 @@ namespace FTLE
         velocityField[x, y, z] = new Vector3(float.Parse(datas[i][3]), float.Parse(datas[i][4]), float.Parse(datas[i][5]));
       }
 
-      // for (int x = 0; x < maxX; x++)
-      // {
-      //   for (int y = 0; y < maxY; y++)
-      //   {
-      //     for (int z = 0; z < maxZ; z++)
-      //     {
-      // 			Console.WriteLine(velocityField[x, y, z]);
-      // 		}
-      //   }
-      // }
       return velocityField;
     }
 
-    public static void WriteFile2D(int t, float[,,] ftleField)
+    public static void WriteFTLEFile(string path, int t, Vector3[,,] pos, float[,,] ftleField, int lenX, int lenY, int lenZ)
     {
-      string path = string.Format("./FTLE/ftle-{0}.txt", t);
       using (StreamWriter sw = new StreamWriter(path))
       {
-        for (int x = 0; x < ftleField.GetLength(0); x++)
+        for (int ix = 0; ix < ftleField.GetLength(0); ix++)
         {
-          for (int y = 0; y < ftleField.GetLength(1); y++)
+          for (int iy = 0; iy < ftleField.GetLength(1); iy++)
           {
-            sw.WriteLine(string.Format("{0} {1} {2}", x, y, ftleField[x, y, 0]));
+            for (int iz = 0; iz < lenZ; iz++)
+            {
+              float x = pos[ix, iy, iz].X;
+              float y = pos[ix, iy, iz].Y;
+              sw.WriteLine(string.Format("{0} {1} {2}", x, y, ftleField[ix, iy, 0]));
+            }
+          }
+        }
+      }
+    }
+
+    public static void WriteVelocity2DFile(string path, int t, Vector3[,] pos, Vector3[,] vel, int lenX, int lenY)
+    {
+      using (StreamWriter sw = new StreamWriter(path))
+      {
+        for (int ix = 0; ix < lenX; ix++)
+        {
+          for (int iy = 0; iy < lenY; iy++)
+          {
+            sw.WriteLine(string.Format("{0} {1} {2} {3} ", pos[ix, iy].X, pos[ix, iy].Y, vel[ix, iy].X, vel[ix, iy].Y));
           }
         }
       }
