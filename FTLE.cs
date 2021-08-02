@@ -227,13 +227,13 @@ namespace Arihara.GuideSmoke
       }
     }
 
-    Vector3 Trace2D(int t_start, int t_end, float h, Vector3 pos)
+    Vector3 Trace2D(int t_start, int t_end, float h, Vector3 position)
     {
       int delta = (t_end - t_start);
 
-      Vector3 velocity = Lerp2D(t_start, pos);
+      Vector3 velocity = Lerp2D(t_start, position);
       // Vector3 velocity = RungeKutta(t_start, pos);
-      return pos + velocity * direction * delta * h;
+      return position + velocity * direction * delta * h;
 
       Vector3 RungeKutta(int t, Vector3 pos)
       {
@@ -379,10 +379,10 @@ namespace Arihara.GuideSmoke
       2 3 3 ... 3 3 2
       1 2 2 ... 2 2 1
       */
-      int GetNeighborPoint(int x0, int y0)
+      int GetNeighborPoint(int _x, int _y)
       {
-        if (0 < x0 && x0 < x_max && 0 < y0 && y0 < y_max) return 3;
-        else if ((0 < x0 && x0 < x_max) || 0 < y0 && y0 < y_max) return 2;
+        if (0 < _x && _x < x_max && 0 < _y && _y < y_max) return 3;
+        else if ((0 < _x && _x < x_max) || 0 < _y && _y < y_max) return 2;
         else return 1;
       }
     }
@@ -569,13 +569,13 @@ namespace Arihara.GuideSmoke
     }
 
     //TODO
-    Vector3 Trace3D(int t_start, int t_end, float h, Vector3 pos)
+    Vector3 Trace3D(int t_start, int t_end, float h, Vector3 position)
     {
       int delta = (t_end - t_start);
 
-      Vector3 velocity = Lerp2D(t_start, pos);
+      Vector3 velocity = Lerp2D(t_start, position);
       // Vector3 velocity = RungeKutta(t_start, pos);
-      return pos + velocity * direction * delta * h;
+      return position + velocity * direction * delta * h;
 
       Vector3 RungeKutta(int t, Vector3 pos)
       {
@@ -722,10 +722,10 @@ namespace Arihara.GuideSmoke
       2 3 3 ... 3 3 2
       1 2 2 ... 2 2 1
       */
-      int GetNeighborPoint(int x0, int y0)
+      int GetNeighborPoint(int _x, int _y)
       {
-        if (0 < x0 && x0 < x_max && 0 < y0 && y0 < y_max) return 3;
-        else if ((0 < x0 && x0 < x_max) || 0 < y0 && y0 < y_max) return 2;
+        if (0 < _x && _x < x_max && 0 < _y && _y < y_max) return 3;
+        else if ((0 < _x && _x < x_max) || 0 < _y && _y < y_max) return 2;
         else return 1;
       }
     }
