@@ -13,16 +13,7 @@ namespace Arihara.GuideSmoke
     const int FORWARD = 1;
     const int BACKWARD = -1;
 
-    const int fileNum = 1000;
-
-    const int velResolution = 32;
-    const int ftleResolution = 128;
-
-    int direction = BACKWARD;
-
-    const int delta_t = 1;
-    const int integral_T = 10;
-    // const float perturbation = 0.1f;
+    private int direction = BACKWARD;
 
     Vector3[,,] originalPosition;
     Vector3[][,,] velocityField;
@@ -31,31 +22,53 @@ namespace Arihara.GuideSmoke
     int x_min, x_max, y_min, y_max;
 
 
-    public FTLE(string folderPath, int d)
+    int ftleResolution = 128;
+    int delta_t = 1;
+    int integral_T = 10;
+
+    #region Accessor
+    public int FtleResolution
     {
-      Constructor(folderPath, d);
+      set { ftleResolution = value; }
+    }
+    public int Delta_t
+    {
+      set { delta_t = value; }
+    }
+    public int Integral_T
+    {
+      set { integral_T = value; }
+    }
+    #endregion
+
+
+    public FTLE(string folderPath, int fileNum, int d)
+    {
+      Constructor(folderPath, fileNum, d);
     }
 
-    public FTLE(string folderPath)
+    public FTLE(string folderPath, int fileNum)
     {
-      Constructor(folderPath, FORWARD);
+      Constructor(folderPath, fileNum, FORWARD);
     }
 
-    private void Constructor(string folderPath, int d)
+    private void Constructor(string folderPath, int fileNum, int d)
     {
       if (d > 0) direction = FORWARD;
       else direction = BACKWARD;
 
       velocityField = new Vector3[fileNum][,,];
       ftleField = new float[fileNum][,,];
-      x_min = 0; y_min = 0;
-      x_max = velResolution - 1; y_max = velResolution - 1;
 
       for (int n = 0; n < fileNum; n++)
       {
         string path = string.Format(folderPath + "/vel-{0}.txt", n);
         velocityField[n] = FileIO.ReadVelocityFile(path);
       }
+
+      x_min = 0; y_min = 0;
+      x_max = velocityField[0].GetLength(0) - 1;
+      y_max = velocityField[0].GetLength(1) - 1;
     }
 
     public void CalcFTLE(int t)
@@ -80,8 +93,8 @@ namespace Arihara.GuideSmoke
       {
         for (int iy = 0; iy < ftleResolution; iy++)
         {
-          float x = (float)ix * (velResolution - 1) / (ftleResolution - 1);
-          float y = (float)iy * (velResolution - 1) / (ftleResolution - 1);
+          float x = (float)ix * x_max / (ftleResolution - 1);
+          float y = (float)iy * y_max / (ftleResolution - 1);
           originalPosition[ix, iy, 0] = new Vector3(x, y, 0);
           pos[ix, iy, 0] = new Vector3(x, y, 0);
           new_pos[ix, iy, 0] = new Vector3(x, y, 0);
@@ -179,11 +192,12 @@ namespace Arihara.GuideSmoke
     {
       if ((ix * (ix - (ftleResolution - 1))) < 0 && (iy * (iy - (ftleResolution - 1))) < 0)
       {
-        float scale = (float)velResolution / ftleResolution;
-        float a00 = (flowmap[ix + 1, iy, 0].X - flowmap[ix - 1, iy, 0].X) / (2 * scale);
-        float a01 = (flowmap[ix, iy + 1, 0].X - flowmap[ix, iy - 1, 0].X) / (2 * scale);
-        float a10 = (flowmap[ix + 1, iy, 0].Y - flowmap[ix - 1, iy, 0].Y) / (2 * scale);
-        float a11 = (flowmap[ix, iy + 1, 0].Y - flowmap[ix, iy - 1, 0].Y) / (2 * scale);
+        float scaleX = (float)(x_max + 1) / ftleResolution;
+        float scaleY = (float)(y_max + 1) / ftleResolution;
+        float a00 = (flowmap[ix + 1, iy, 0].X - flowmap[ix - 1, iy, 0].X) / (2 * scaleX);
+        float a01 = (flowmap[ix, iy + 1, 0].X - flowmap[ix, iy - 1, 0].X) / (2 * scaleY);
+        float a10 = (flowmap[ix + 1, iy, 0].Y - flowmap[ix - 1, iy, 0].Y) / (2 * scaleX);
+        float a11 = (flowmap[ix, iy + 1, 0].Y - flowmap[ix, iy - 1, 0].Y) / (2 * scaleY);
 
         float[,] tensor2D = new float[2, 2];
         tensor2D[0, 0] = (float)Math.Pow(a00, 2) + (float)Math.Pow(a01, 2);
@@ -259,7 +273,7 @@ namespace Arihara.GuideSmoke
       if (neiborPoint == 2)
       {
         int x1, y1;
-        if (x0 <= 0 || (velResolution - 1) <= x0)
+        if (x0 <= 0 || x_max <= x0)
         {
           if (x0 <= 0)
           {
@@ -268,8 +282,8 @@ namespace Arihara.GuideSmoke
           }
           else
           {
-            x0 = velResolution - 1;
-            x1 = velResolution - 2;
+            x0 = x_max;
+            x1 = x_max - 1;
           }
 
           if ((y0 - y) < 0)
@@ -286,8 +300,8 @@ namespace Arihara.GuideSmoke
           }
           else
           {
-            y0 = velResolution - 1;
-            y1 = velResolution - 2;
+            y0 = y_max;
+            y1 = y_max - 1;
           }
 
           if ((x0 - x) < 0)
@@ -317,8 +331,8 @@ namespace Arihara.GuideSmoke
         }
         else
         {
-          x0 = velResolution - 1;
-          x1 = velResolution - 2;
+          x0 = x_max;
+          x1 = x_max - 1;
         }
         if (y0 <= 0)
         {
@@ -327,8 +341,8 @@ namespace Arihara.GuideSmoke
         }
         else
         {
-          y0 = velResolution - 1;
-          y1 = velResolution - 2;
+          y0 = y_max;
+          y1 = y_max - 1;
         }
 
         Vector3 v00 = velocityField[t][x0, y0, 0];
@@ -355,8 +369,8 @@ namespace Arihara.GuideSmoke
       */
       int GetNeighborPoint(int x0, int y0)
       {
-        if (0 < x0 && x0 < (velResolution - 1) && 0 < y0 && y0 < (velResolution - 1)) return 3;
-        else if ((0 < x0 && x0 < (velResolution - 1)) || 0 < y0 && y0 < (velResolution - 1)) return 2;
+        if (0 < x0 && x0 < x_max && 0 < y0 && y0 < y_max) return 3;
+        else if ((0 < x0 && x0 < x_max) || 0 < y0 && y0 < y_max) return 2;
         else return 1;
       }
     }

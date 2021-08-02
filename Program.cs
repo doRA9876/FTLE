@@ -15,7 +15,7 @@ namespace Arihara.GuideSmoke
       int t = 510;
       string folderPath = string.Format("./data/ObsSphere");
       string outputPath = string.Format("./data/FTLE/ftle-{0}.txt", t);
-      FTLE ftle = new FTLE(folderPath, -1);
+      FTLE ftle = new FTLE(folderPath, 1000, -1);
       ftle.CalcFTLE(t);
       ftle.WriteFTLE(outputPath, t);
     }
