@@ -14,12 +14,13 @@ namespace Arihara.GuideSmoke
     const int BACKWARD = -1;
 
     private int direction = BACKWARD;
+    private int dimension = 2;
 
     Vector3[,,] originalPosition;
     Vector3[][,,] velocityField;
     float[][,,] ftleField;
 
-    int x_min, x_max, y_min, y_max;
+    int x_min, x_max, y_min, y_max, z_min, z_max;
 
 
     int ftleResolution = 128;
@@ -66,14 +67,19 @@ namespace Arihara.GuideSmoke
         velocityField[n] = FileIO.ReadVelocityFile(path);
       }
 
-      x_min = 0; y_min = 0;
+      x_min = 0; y_min = 0; z_min = 0;
       x_max = velocityField[0].GetLength(0) - 1;
       y_max = velocityField[0].GetLength(1) - 1;
+      z_max = velocityField[0].GetLength(2) - 1;
+
+      if (z_max == 0) dimension = 2;
+      if (z_max > 0) dimension = 3;
     }
 
     public void CalcFTLE(int t)
     {
-      ftleField[t] = FTLE2D(t);
+      if (dimension == 2) ftleField[t] = FTLE2D(t);
+      if (dimension == 3) ftleField[t] = FTLE3D(t);
     }
 
     public void WriteFTLE(string path, int t)
@@ -129,27 +135,27 @@ namespace Arihara.GuideSmoke
                 leftDomain[x, y, 0] = true;
                 if (calcFTLE[x, y, 0] == false)
                 {
-                  ftle[x, y, 0] = CalculateFTLE(pos, x, y);
+                  ftle[x, y, 0] = CalculateFTLE2D(pos, x, y);
                   calcFTLE[x, y, 0] = true;
 
                   if (x > x_min && calcFTLE[x - 1, y, 0] == false)
                   {
-                    ftle[x - 1, y, 0] = CalculateFTLE(pos, x - 1, y);
+                    ftle[x - 1, y, 0] = CalculateFTLE2D(pos, x - 1, y);
                     calcFTLE[x - 1, y, 0] = true;
                   }
                   if (x < x_max && calcFTLE[x + 1, y, 0] == false)
                   {
-                    ftle[x + 1, y, 0] = CalculateFTLE(pos, x + 1, y);
+                    ftle[x + 1, y, 0] = CalculateFTLE2D(pos, x + 1, y);
                     calcFTLE[x + 1, y, 0] = true;
                   }
                   if (y > y_min && calcFTLE[x, y - 1, 0] == false)
                   {
-                    ftle[x, y - 1, 0] = CalculateFTLE(pos, x, y - 1);
+                    ftle[x, y - 1, 0] = CalculateFTLE2D(pos, x, y - 1);
                     calcFTLE[x, y - 1, 0] = true;
                   }
                   if (y < y_max && calcFTLE[x, y + 1, 0] == false)
                   {
-                    ftle[x, y + 1, 0] = CalculateFTLE(pos, x, y + 1);
+                    ftle[x, y + 1, 0] = CalculateFTLE2D(pos, x, y + 1);
                     calcFTLE[x, y + 1, 0] = true;
                   }
                 }
@@ -180,7 +186,7 @@ namespace Arihara.GuideSmoke
         {
           if (calcFTLE[x, y, 0] == false)
           {
-            ftle[x, y, 0] = CalculateFTLE(pos, x, y);
+            ftle[x, y, 0] = CalculateFTLE2D(pos, x, y);
             calcFTLE[x, y, 0] = true;
           }
         }
@@ -188,7 +194,7 @@ namespace Arihara.GuideSmoke
       return ftle;
     }
 
-    float CalculateFTLE(Vector3[,,] flowmap, int ix, int iy)
+    float CalculateFTLE2D(Vector3[,,] flowmap, int ix, int iy)
     {
       if ((ix * (ix - (ftleResolution - 1))) < 0 && (iy * (iy - (ftleResolution - 1))) < 0)
       {
@@ -373,6 +379,11 @@ namespace Arihara.GuideSmoke
         else if ((0 < x0 && x0 < x_max) || 0 < y0 && y0 < y_max) return 2;
         else return 1;
       }
+    }
+
+    float[,,] FTLE3D(int t)
+    {
+      return null;
     }
   }
 }
