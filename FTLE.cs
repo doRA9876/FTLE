@@ -195,12 +195,17 @@ namespace Arihara.GuideSmoke
       return ftle;
     }
 
+
     float CalculateFTLE2D(Vector3[,,] flowmap, int ix, int iy)
     {
       if ((ix * (ix - (ftleResolution - 1))) < 0 && (iy * (iy - (ftleResolution - 1))) < 0)
       {
         float scaleX = (float)(x_max + 1) / ftleResolution;
         float scaleY = (float)(y_max + 1) / ftleResolution;
+        /*
+        00 01
+        10 11
+        */
         float a00 = (flowmap[ix + 1, iy, 0].X - flowmap[ix - 1, iy, 0].X) / (2 * scaleX);
         float a01 = (flowmap[ix, iy + 1, 0].X - flowmap[ix, iy - 1, 0].X) / (2 * scaleY);
         float a10 = (flowmap[ix + 1, iy, 0].Y - flowmap[ix - 1, iy, 0].Y) / (2 * scaleX);
@@ -518,24 +523,41 @@ namespace Arihara.GuideSmoke
       return ftle;
     }
 
-    //TODO
+    /*
+    refer:http://georgehaller.com/reprints/annurev-fluid-010313-141322.pdf
+    p.10
+    */
     float CalculateFTLE3D(Vector3[,,] flowmap, int ix, int iy, int iz)
     {
       if ((ix * (ix - (ftleResolution - 1))) < 0 && (iy * (iy - (ftleResolution - 1))) < 0)
       {
         float scaleX = (float)(x_max + 1) / ftleResolution;
         float scaleY = (float)(y_max + 1) / ftleResolution;
-        float a00 = (flowmap[ix + 1, iy, 0].X - flowmap[ix - 1, iy, 0].X) / (2 * scaleX);
-        float a01 = (flowmap[ix, iy + 1, 0].X - flowmap[ix, iy - 1, 0].X) / (2 * scaleY);
-        float a10 = (flowmap[ix + 1, iy, 0].Y - flowmap[ix - 1, iy, 0].Y) / (2 * scaleX);
-        float a11 = (flowmap[ix, iy + 1, 0].Y - flowmap[ix, iy - 1, 0].Y) / (2 * scaleY);
+        float scaleZ = (float)(z_max + 1) / ftleResolution;
+        /*
+        00 01 02
+        10 11 12
+        20 21 22
+        */
+        float a00 = (flowmap[ix + 1, iy, iz].X - flowmap[ix - 1, iy, iz].X) / (2 * scaleX);
+        float a01 = (flowmap[ix, iy + 1, iz].X - flowmap[ix, iy - 1, iz].X) / (2 * scaleY);
+        float a02 = (flowmap[ix, iy, iz + 1].X - flowmap[ix, iy, iz - 1].X) / (2 * scaleZ);
+        float a10 = (flowmap[ix + 1, iy, iz].Y - flowmap[ix - 1, iy, iz].Y) / (2 * scaleX);
+        float a11 = (flowmap[ix, iy + 1, iz].Y - flowmap[ix, iy - 1, iz].Y) / (2 * scaleY);
+        float a12 = (flowmap[ix, iy, iz + 1].Y - flowmap[ix, iy, iz - 1].Y) / (2 * scaleZ);
+        float a20 = (flowmap[ix + 1, iy, iz].Z - flowmap[ix - 1, iy, iz].Z) / (2 * scaleX);
+        float a21 = (flowmap[ix, iy + 1, iz].Z - flowmap[ix, iy - 1, iz].Z) / (2 * scaleY);
+        float a22 = (flowmap[ix, iy, iz + 1].Z - flowmap[ix, iy, iz - 1].Z) / (2 * scaleZ);
 
-        float[,] tensor2D = new float[2, 2];
-        tensor2D[0, 0] = (float)Math.Pow(a00, 2) + (float)Math.Pow(a01, 2);
-        tensor2D[1, 0] = tensor2D[0, 1] = a00 * a01 + a10 * a11;
-        tensor2D[1, 1] = (float)Math.Pow(a11, 2) + (float)Math.Pow(a10, 2);
+        float[,] tensor3D = new float[3, 3];
+        tensor3D[0, 0] = (float)Math.Pow(a00, 2) + (float)Math.Pow(a01, 2) + (float)Math.Pow(a02, 2);
+        tensor3D[1, 1] = (float)Math.Pow(a10, 2) + (float)Math.Pow(a11, 2) + (float)Math.Pow(a12, 2);
+        tensor3D[2, 2] = (float)Math.Pow(a20, 2) + (float)Math.Pow(a21, 2) + (float)Math.Pow(a22, 2);
+        tensor3D[1, 0] = tensor3D[0, 1] = a00 * a10 + a01 * a11 + a02 * a12;
+        tensor3D[2, 0] = tensor3D[0, 2] = a00 * a20 + a01 * a21 + a02 * a22;
+        tensor3D[2, 1] = tensor3D[1, 2] = a10 * a20 + a11 * a21 + a12 * a22;
 
-        double result = (float)Math.Log(Eigen.GetMaxEigenValue2x2(tensor2D)) / Math.Abs(integral_T / delta_t);
+        double result = (float)Math.Log(Eigen.GetMaxEigenValue3x3(tensor3D)) / Math.Abs(integral_T / delta_t);
 
         if (result != double.NegativeInfinity) return (float)result;
         else return 0;
@@ -546,6 +568,7 @@ namespace Arihara.GuideSmoke
       }
     }
 
+    //TODO
     Vector3 Trace3D(int t_start, int t_end, float h, Vector3 pos)
     {
       int delta = (t_end - t_start);
@@ -568,6 +591,7 @@ namespace Arihara.GuideSmoke
       }
     }
 
+    //TODO
     Vector3 Lerp3D(int t, Vector3 pos)
     {
       float x = pos.X;
