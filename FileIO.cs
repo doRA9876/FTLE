@@ -58,15 +58,25 @@ namespace Arihara.GuideSmoke
     {
       using (StreamWriter sw = new StreamWriter(path))
       {
-        for (int ix = 0; ix < ftleField.GetLength(0); ix++)
+        for (int ix = 0; ix < lenX; ix++)
         {
-          for (int iy = 0; iy < ftleField.GetLength(1); iy++)
+          for (int iy = 0; iy < lenY; iy++)
           {
-            for (int iz = 0; iz < lenZ; iz++)
+            if (lenZ == 1)
             {
-              float x = pos[ix, iy, iz].X;
-              float y = pos[ix, iy, iz].Y;
+              float x = pos[ix, iy, 0].X;
+              float y = pos[ix, iy, 0].Y;
               sw.WriteLine(string.Format("{0} {1} {2}", x, y, ftleField[ix, iy, 0]));
+            }
+            else
+            {
+              for (int iz = 0; iz < lenZ; iz++)
+              {
+                float x = pos[ix, iy, iz].X;
+                float y = pos[ix, iy, iz].Y;
+                float z = pos[ix, iy, iz].Z;
+                sw.WriteLine(string.Format("{0} {1} {2} {3}", x, y, z, ftleField[ix, iy, iz]));
+              }
             }
           }
         }
