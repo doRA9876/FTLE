@@ -256,7 +256,7 @@ namespace Arihara.GuideSmoke
       int x0 = (int)Math.Round(x);
       int y0 = (int)Math.Round(y);
 
-      if ((pos.X - x_min) * (pos.X - x_max) >= 0 || (pos.Y - y_min) * (pos.Y - y_max) >= 0) return Vector3.Zero;
+      if ((x - x_min) * (x - x_max) >= 0 || (y - y_min) * (y - y_max) >= 0) return Vector3.Zero;
 
       int x1, y1;
       if ((x - x0) < 0)
@@ -462,30 +462,28 @@ namespace Arihara.GuideSmoke
       }
     }
 
-    //TODO
     Vector3 Trace3D(int t_start, int t_end, float h, Vector3 position)
     {
       int delta = (t_end - t_start);
 
-      Vector3 velocity = Lerp2D(t_start, position);
+      Vector3 velocity = Lerp3D(t_start, position);
       // Vector3 velocity = RungeKutta(t_start, pos);
       return position + velocity * direction * delta * h;
 
       Vector3 RungeKutta(int t, Vector3 pos)
       {
         float dt = delta_t * direction;
-        Vector3 k1 = Lerp2D(t, pos);
+        Vector3 k1 = Lerp3D(t, pos);
         Vector3 x2 = pos + k1 * dt / 2;
-        Vector3 k2 = Lerp2D((int)(t + dt / 2), x2);
+        Vector3 k2 = Lerp3D((int)(t + dt / 2), x2);
         Vector3 x3 = pos + k2 * dt / 2;
-        Vector3 k3 = Lerp2D((int)(t + dt / 2), x3);
+        Vector3 k3 = Lerp3D((int)(t + dt / 2), x3);
         Vector3 x4 = pos + k3 * dt;
-        Vector3 k4 = Lerp2D((int)(t + dt), x4);
+        Vector3 k4 = Lerp3D((int)(t + dt), x4);
         return (k1 + k2 + k3 + k4) / 6;
       }
     }
 
-    //TODO
     Vector3 Lerp3D(int t, Vector3 pos)
     {
       float x = pos.X;
@@ -494,6 +492,9 @@ namespace Arihara.GuideSmoke
       int x0 = (int)Math.Round(x);
       int y0 = (int)Math.Round(y);
       int z0 = (int)Math.Round(z);
+
+      if ((x - x_min) * (x - x_max) >= 0 || (y - y_min) * (y - y_max) >= 0 || (z - z_min) * (z - z_max) >= 0) 
+        return Vector3.Zero;
 
       int x1, y1, z1;
       if ((x - x0) < 0)
