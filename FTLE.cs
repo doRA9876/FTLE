@@ -596,138 +596,40 @@ namespace Arihara.GuideSmoke
     {
       float x = pos.X;
       float y = pos.Y;
+      float z = pos.Z;
       int x0 = (int)Math.Round(x);
       int y0 = (int)Math.Round(y);
-      int neiborPoint = GetNeighborPoint(x0, y0);
+      int z0 = (int)Math.Round(z);
 
-      if (neiborPoint == 3)
-      {
-        int x1, y1;
-        if ((x - x0) < 0)
-          x1 = x0 - 1;
-        else
-          x1 = x0 + 1;
-
-        if ((y - y0) < 0)
-          y1 = y0 - 1;
-        else
-          y1 = y0 + 1;
-
-        Vector3 v00 = velocityField[t][x0, y0, 0];
-        Vector3 v10 = velocityField[t][x1, y0, 0];
-        Vector3 v01 = velocityField[t][x0, y1, 0];
-
-        float delta_x = Math.Abs(x - x1);
-        float delta_y = Math.Abs(y - y1);
-        float dx = Math.Abs(x1 - x0);
-        float dy = Math.Abs(y1 - y0);
-
-        return v00 + (v10 - v00) / dx * delta_x + (v01 - v00) / dy * delta_y;
-      }
-
-      if (neiborPoint == 2)
-      {
-        int x1, y1;
-        if (x0 <= 0 || x_max <= x0)
-        {
-          if (x0 <= 0)
-          {
-            x0 = 0;
-            x1 = 1;
-          }
-          else
-          {
-            x0 = x_max;
-            x1 = x_max - 1;
-          }
-
-          if ((y0 - y) < 0)
-            y1 = y0 + 1;
-          else
-            y1 = y0 - 1;
-        }
-        else
-        {
-          if (y0 <= 0)
-          {
-            y0 = 0;
-            y1 = 1;
-          }
-          else
-          {
-            y0 = y_max;
-            y1 = y_max - 1;
-          }
-
-          if ((x0 - x) < 0)
-            x1 = x0 + 1;
-          else
-            x1 = x0 - 1;
-        }
-        Vector3 v00 = velocityField[t][x0, y0, 0];
-        Vector3 v01 = velocityField[t][x0, y1, 0];
-        Vector3 v10 = velocityField[t][x1, y0, 0];
-
-        float delta_x = Math.Abs(x - x1);
-        float delta_y = Math.Abs(y - y1);
-        float dx = Math.Abs(x1 - x0);
-        float dy = Math.Abs(y1 - y0);
-
-        return Vector3.Zero;
-      }
-
+      int x1, y1, z1;
+      if ((x - x0) < 0)
+        x1 = x0 - 1;
       else
-      {
-        int x1, y1;
-        if (x0 <= 0)
-        {
-          x0 = 0;
-          x1 = 1;
-        }
-        else
-        {
-          x0 = x_max;
-          x1 = x_max - 1;
-        }
-        if (y0 <= 0)
-        {
-          y0 = 0;
-          y1 = 1;
-        }
-        else
-        {
-          y0 = y_max;
-          y1 = y_max - 1;
-        }
+        x1 = x0 + 1;
 
-        Vector3 v00 = velocityField[t][x0, y0, 0];
-        Vector3 v01 = velocityField[t][x0, y1, 0];
-        Vector3 v10 = velocityField[t][x1, y0, 0];
+      if ((y - y0) < 0)
+        y1 = y0 - 1;
+      else
+        y1 = y0 + 1;
 
-        float delta_x = Math.Abs(x - x1);
-        float delta_y = Math.Abs(y - y1);
-        float dx = Math.Abs(x1 - x0);
-        float dy = Math.Abs(y1 - y0);
+      if ((z - z0) < 0)
+        z1 = z0 - 1;
+      else
+        z1 = z0 + 1;
 
-        return Vector3.Zero;
-      }
+      Vector3 v000 = velocityField[t][x0, y0, z0];
+      Vector3 v100 = velocityField[t][x1, y0, z0];
+      Vector3 v010 = velocityField[t][x0, y1, z0];
+      Vector3 v001 = velocityField[t][x0, y0, z1];
 
-      /*
-      velocity field
-      1 2 2 ... 2 2 1
-      2 3 3 ... 3 3 2
-      2 3 3 ... 3 3 2
-      . . . ... . . .
-      2 3 3 ... 3 3 2
-      2 3 3 ... 3 3 2
-      1 2 2 ... 2 2 1
-      */
-      int GetNeighborPoint(int _x, int _y)
-      {
-        if (0 < _x && _x < x_max && 0 < _y && _y < y_max) return 3;
-        else if ((0 < _x && _x < x_max) || 0 < _y && _y < y_max) return 2;
-        else return 1;
-      }
+      float delta_x = Math.Abs(x - x1);
+      float delta_y = Math.Abs(y - y1);
+      float delta_z = Math.Abs(z - z1);
+      float dx = Math.Abs(x1 - x0);
+      float dy = Math.Abs(y1 - y0);
+      float dz = Math.Abs(z1 - z0);
+
+      return v000 + (v100 - v000) / dx * delta_x + (v010 - v000) / dy * delta_y + (v001 - v000) / dz * delta_z;
     }
     #endregion
   }
