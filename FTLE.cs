@@ -19,11 +19,12 @@ namespace Arihara.GuideSmoke
     Vector3[,,] originalPosition;
     Vector3[][,,] velocityField;
     float[][,,] ftleField;
+    bool[] isCalculatedTime;
 
     int x_min, x_max, y_min, y_max, z_min, z_max;
 
 
-    int ftleResolution = 128;
+    int ftleResolution = 32;
     int delta_t = 1;
     int integral_T = 10;
 
@@ -60,11 +61,13 @@ namespace Arihara.GuideSmoke
 
       velocityField = new Vector3[fileNum][,,];
       ftleField = new float[fileNum][,,];
+      isCalculatedTime = new bool[fileNum];
 
       for (int n = 0; n < fileNum; n++)
       {
         string path = string.Format(folderPath + "/vel-{0}.txt", n);
         velocityField[n] = FileIO.ReadVelocityFile(path);
+        isCalculatedTime[n] = false;
       }
 
       x_min = 0; y_min = 0; z_min = 0;
@@ -80,11 +83,41 @@ namespace Arihara.GuideSmoke
     {
       if (dimension == 2) ftleField[t] = FTLE2D(t);
       if (dimension == 3) ftleField[t] = FTLE3D(t);
+      isCalculatedTime[t] = true;
     }
 
     public void WriteFTLE(string path, int t)
     {
-      FileIO.WriteFTLEFile(path, t, originalPosition, ftleField[t], ftleResolution, ftleResolution, 1);
+      if (!isCalculatedTime[t]) CalcFTLE(t);
+      if(dimension == 2)
+        FileIO.WriteFTLEFile(path, t, originalPosition, ftleField[t], ftleResolution, ftleResolution, 1);
+      if(dimension == 3)
+        FileIO.WriteFTLEFile(path, t, originalPosition, ftleField[t], ftleResolution, ftleResolution, ftleResolution);
+    }
+
+    public void ShowFTLE(int t)
+    {
+      if (!isCalculatedTime[t]) CalcFTLE(t);
+      for (int ix = 0; ix < ftleResolution; ix++)
+      {
+        for (int iy = 0; iy < ftleResolution; iy++)
+        {
+          if (dimension == 2)
+          {
+            Vector3 pos = originalPosition[ix, iy, 0];
+            Console.WriteLine("{0} {1} {2}", pos.X, pos.Y, ftleField[t][ix, iy, 0]);
+          }
+
+          if (dimension == 3)
+          {
+            for (int iz = 0; iz < ftleResolution; iz++)
+            {
+              Vector3 pos = originalPosition[ix, iy, iz];
+              Console.WriteLine("{0} {1} {2} {3}", pos.X, pos.Y, pos.Z, ftleField[t][ix, iy, iz]);
+            }
+          }
+        }
+      }
     }
 
     #region Implementation for 2D FTLE
@@ -423,7 +456,7 @@ namespace Arihara.GuideSmoke
     */
     float CalculateFTLE3D(Vector3[,,] flowmap, int ix, int iy, int iz)
     {
-      if ((ix * (ix - (ftleResolution - 1))) < 0 && (iy * (iy - (ftleResolution - 1))) < 0)
+      if ((ix * (ix - (ftleResolution - 1))) < 0 && (iy * (iy - (ftleResolution - 1))) < 0 && (iz * (iz - (ftleResolution - 1))) < 0)
       {
         float scaleX = (float)(x_max + 1) / ftleResolution;
         float scaleY = (float)(y_max + 1) / ftleResolution;
@@ -493,7 +526,7 @@ namespace Arihara.GuideSmoke
       int y0 = (int)Math.Round(y);
       int z0 = (int)Math.Round(z);
 
-      if ((x - x_min) * (x - x_max) >= 0 || (y - y_min) * (y - y_max) >= 0 || (z - z_min) * (z - z_max) >= 0) 
+      if ((x - x_min) * (x - x_max) >= 0 || (y - y_min) * (y - y_max) >= 0 || (z - z_min) * (z - z_max) >= 0)
         return Vector3.Zero;
 
       int x1, y1, z1;

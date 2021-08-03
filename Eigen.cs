@@ -29,7 +29,7 @@ namespace Arihara.GuideSmoke
     {
       Vector3 x = new Vector3(1, 0, 0);
       Vector3 y = new Vector3(1, 0, 0);
-      int stepNum = 100;
+      int stepNum = 10;
       for (int k = 0; k < stepNum; k++)
       {
         x = Vector3.Normalize(y);
