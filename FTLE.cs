@@ -20,6 +20,7 @@ namespace Arihara.GuideSmoke
     Vector3[][,,] velocityField;
     float[][,,] ftleField;
     bool[] isCalculatedTime;
+    bool[] isLoadFile;
 
     int x_min, x_max, y_min, y_max, z_min, z_max;
 
@@ -27,6 +28,10 @@ namespace Arihara.GuideSmoke
     int ftleResolution = 32;
     int delta_t = 1;
     int integral_T = 10;
+
+    string dataFolderPath;
+    int dataNum;
+
 
     #region Accessor
     public int FtleResolution
@@ -62,14 +67,17 @@ namespace Arihara.GuideSmoke
       velocityField = new Vector3[fileNum][,,];
       ftleField = new float[fileNum][,,];
       isCalculatedTime = new bool[fileNum];
+      isLoadFile = new bool[fileNum];
 
+      dataNum = fileNum;
+      dataFolderPath = folderPath;
       for (int n = 0; n < fileNum; n++)
       {
-        string path = string.Format(folderPath + "/vel-{0}.txt", n);
-        velocityField[n] = FileIO.ReadVelocityFile(path);
         isCalculatedTime[n] = false;
+        isLoadFile[n] = false;
       }
 
+      LoadData(0);
       x_min = 0; y_min = 0; z_min = 0;
       x_max = velocityField[0].GetLength(0) - 1;
       y_max = velocityField[0].GetLength(1) - 1;
@@ -89,9 +97,9 @@ namespace Arihara.GuideSmoke
     public void WriteFTLE(string path, int t)
     {
       if (!isCalculatedTime[t]) CalcFTLE(t);
-      if(dimension == 2)
+      if (dimension == 2)
         FileIO.WriteFTLEFile(path, t, originalPosition, ftleField[t], ftleResolution, ftleResolution, 1);
-      if(dimension == 3)
+      if (dimension == 3)
         FileIO.WriteFTLEFile(path, t, originalPosition, ftleField[t], ftleResolution, ftleResolution, ftleResolution);
     }
 
@@ -120,6 +128,16 @@ namespace Arihara.GuideSmoke
       }
     }
 
+    private void LoadData(int t)
+    {
+      if (isLoadFile[t]) return;
+      if (t < 0 || dataNum - 1 < t) return;
+
+      string path = string.Format(dataFolderPath + "/vel-{0}.txt", t);
+      velocityField[t] = FileIO.ReadVelocityFile(path);
+      isLoadFile[t] = true;
+    }
+
     #region Implementation for 2D FTLE
     float[,,] FTLE2D(int t)
     {
@@ -141,6 +159,12 @@ namespace Arihara.GuideSmoke
           leftDomain[ix, iy, 0] = false;
           calcFTLE[ix, iy, 0] = false;
         }
+      }
+
+      for (int ti = 0; ti < integral_T; ti++)
+      {
+        int t0 = t + ti * direction;
+        LoadData(t0);
       }
 
       for (int t_integration = 0; t_integration < integral_T - delta_t; t_integration = t_integration + delta_t)
@@ -341,6 +365,12 @@ namespace Arihara.GuideSmoke
             calcFTLE[ix, iy, iz] = false;
           }
         }
+      }
+
+      for (int ti = 0; ti < integral_T; ti++)
+      {
+        int t0 = t + ti * direction;
+        LoadData(t0);
       }
 
       for (int t_integration = 0; t_integration < integral_T - delta_t; t_integration = t_integration + delta_t)
