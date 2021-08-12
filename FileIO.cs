@@ -6,12 +6,12 @@ namespace Arihara.GuideSmoke
 {
   static class FileIO
   {
-    public static Vector3[,,] ReadVelocityFile(string path)
+    public static bool ReadVelocityFile(string path, ref Vector3[,,] velocityField)
     {
       if (!File.Exists(path))
       {
         Console.WriteLine("Target File \"{0}\" is not exists.", path);
-        return null;
+        return false;
       }
 
       string fileData = string.Empty;
@@ -42,7 +42,7 @@ namespace Arihara.GuideSmoke
       }
       maxX += 1; maxY += 1; maxZ += 1;
 
-      Vector3[,,] velocityField = new Vector3[maxX, maxY, maxZ];
+      velocityField = new Vector3[maxX, maxY, maxZ];
       for (int i = 0; i < culums.Length - 1; i++)
       {
         int x = int.Parse(datas[i][0]);
@@ -51,7 +51,7 @@ namespace Arihara.GuideSmoke
         velocityField[x, y, z] = new Vector3(float.Parse(datas[i][3]), float.Parse(datas[i][4]), float.Parse(datas[i][5]));
       }
 
-      return velocityField;
+      return true;
     }
 
     public static void WriteFTLEFile(string path, int t, Vector3[,,] pos, float[,,] ftleField, int lenX, int lenY, int lenZ)

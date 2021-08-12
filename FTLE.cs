@@ -134,7 +134,7 @@ namespace Arihara.GuideSmoke
       if (t < 0 || dataNum - 1 < t) return;
 
       string path = string.Format(dataFolderPath + "/vel-{0}.txt", t);
-      velocityField[t] = FileIO.ReadVelocityFile(path);
+      if(!FileIO.ReadVelocityFile(path, ref velocityField[t])) Environment.Exit(0);
       isLoadFile[t] = true;
     }
 
