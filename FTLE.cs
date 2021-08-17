@@ -94,6 +94,16 @@ namespace Arihara.GuideSmoke
       isCalculatedTime[t] = true;
     }
 
+    public float[,,] GetFTLE(int t)
+    {
+      return ftleField[t];
+    }
+
+    public Vector3[,,] GetOriginalPos()
+    {
+      return originalPosition;
+    }
+
     public void WriteFTLE(string path, int t)
     {
       if (!isCalculatedTime[t]) CalcFTLE(t);

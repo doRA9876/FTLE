@@ -83,6 +83,35 @@ namespace Arihara.GuideSmoke
       }
     }
 
+    public static void WriteLCSFile(string path, Vector3[,,] pos, int[,,] lcs, int lenX, int lenY, int lenZ)
+    {
+      using (StreamWriter sw = new StreamWriter(path))
+      {
+        for (int ix = 0; ix < lenX; ix++)
+        {
+          for (int iy = 0; iy < lenY; iy++)
+          {
+            if (lenZ == 1)
+            {
+              float x = pos[ix, iy, 0].X;
+              float y = pos[ix, iy, 0].Y;
+              sw.WriteLine(string.Format("{0} {1} {2}", x, y, lcs[ix, iy, 0]));
+            }
+            else
+            {
+              for (int iz = 0; iz < lenZ; iz++)
+              {
+                float x = pos[ix, iy, iz].X;
+                float y = pos[ix, iy, iz].Y;
+                float z = pos[ix, iy, iz].Z;
+                sw.WriteLine(string.Format("{0} {1} {2} {3}", x, y, z, lcs[ix, iy, iz]));
+              }
+            }
+          }
+        }
+      }
+    }
+
     public static void WriteVelocity2DFile(string path, int t, Vector3[,] pos, Vector3[,] vel, int lenX, int lenY)
     {
       using (StreamWriter sw = new StreamWriter(path))

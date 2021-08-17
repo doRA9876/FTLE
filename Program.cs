@@ -19,8 +19,12 @@ namespace Arihara.GuideSmoke
         Console.WriteLine("Start FTLE Calculation : t = {0}", t);
         ftle.CalcFTLE(t);
         // ftle.ShowFTLE(t);
-        string outputPath = string.Format("./data/FTLE/ftle-{0}.txt", t);
-        ftle.WriteFTLE(outputPath, t);
+        string outputFTLE = string.Format("./data/FTLE/ftle-{0}.txt", t);
+        string outputLCS = string.Format("./data/LCS/lcs-{0}.txt", t);
+        LCS lcs = new LCS(ftle.GetFTLE(t));
+        lcs.LcsByThreshold(0.5f);
+        lcs.WriteLCS(outputLCS, ftle.GetOriginalPos());
+        ftle.WriteFTLE(outputFTLE, t);
         Console.WriteLine("End FTLE Calculation");
       }
     }
