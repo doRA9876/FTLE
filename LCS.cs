@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Numerics;
 
 namespace Arihara.GuideSmoke
@@ -64,7 +65,9 @@ namespace Arihara.GuideSmoke
 
     public void LcsByThreshold()
     {
-      LcsByThreshold(CalcMedian());
+      float median = CalcMedian();
+      LcsByThreshold(median);
+      Console.WriteLine("Used Median Value: {0}", median);
     }
 
     public void ShowFTLE()
@@ -88,7 +91,19 @@ namespace Arihara.GuideSmoke
 
     private float CalcMedian()
     {
-      return 0;
+      float[] arr = new float[lenX * lenY * lenZ];
+      for (int ix = 0; ix < lenX; ix++)
+      {
+        for (int iy = 0; iy < lenY; iy++)
+        {
+          for (int iz = 0; iz < lenZ; iz++)
+          {
+            arr[ix * (lenY * lenZ) + iy * lenZ + iz] = ftleField[ix, iy, iz];
+          }
+        }
+      }
+      Array.Sort(arr);
+      return arr[(lenX * lenY * lenZ) / 2];
     }
   }
 }
