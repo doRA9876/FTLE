@@ -25,7 +25,7 @@ namespace Arihara.GuideSmoke
     int x_min, x_max, y_min, y_max, z_min, z_max;
 
 
-    int ftleResolution = 32;
+    int ftleResolution = 64;
     int delta_t = 1;
     int integral_T = 10;
 
@@ -289,7 +289,7 @@ namespace Arihara.GuideSmoke
       int delta = (t_end - t_start);
 
       Vector3 velocity = Lerp2D(t_start, position);
-      // Vector3 velocity = RungeKutta(t_start, pos);
+      // Vector3 velocity = RungeKutta(t_start, position);
       return position + velocity * direction * delta * h;
 
       Vector3 RungeKutta(int t, Vector3 pos)

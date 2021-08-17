@@ -12,9 +12,9 @@ namespace Arihara.GuideSmoke
   {
     static void Main(string[] args)
     {
-      string folderPath = string.Format("./data/ObsSphere_32x32x32_2");
-      FTLE ftle = new FTLE(folderPath, 1000, 1);
-      for (int t = 300; t < 601; t += 100)
+      string folderPath = string.Format("./data/ObsSphere_64x64x1");
+      FTLE ftle = new FTLE(folderPath, 1000, -1);
+      for (int t = 200; t < 601; t += 50)
       {
         Console.WriteLine("Start FTLE Calculation : t = {0}", t);
         ftle.CalcFTLE(t);
