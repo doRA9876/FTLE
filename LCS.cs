@@ -70,13 +70,50 @@ namespace Arihara.GuideSmoke
       Console.WriteLine("Used Median Value: {0}", median);
     }
 
-    public void LcsByHessian()
+    public void LcsByHessian2D()
     {
-      for (int i = 0; i < 1; i++)
+      for (int i = 0; i < 5; i++)
       {
         GaussianFilter2D();
       }
-      ShowFTLE();
+
+      float[,,] secondPartialDerivative = new float[lenX, lenY, 3]; //[lenX, lenY, (dx^2, dy^2, dxdy)]
+      for (int ix = 0; ix < lenX; ix++)
+      {
+        for (int iy = 0; iy < lenY; iy++)
+        {
+          float dxx = (GetCoordValue2D(ix + 1, iy) - GetCoordValue2D(ix - 1, iy)) / 2;
+          float dyy = (GetCoordValue2D(ix, iy + 1) - GetCoordValue2D(ix, iy - 1)) / 2;
+          float dxdy = (GetCoordValue2D(ix + 1, iy + 1) - GetCoordValue2D(ix - 1, iy + 1)
+                      - GetCoordValue2D(ix + 1, iy - 1) + GetCoordValue2D(ix - 1, iy - 1)) / 1;
+
+          float L2 = (float)Math.Sqrt(dxx * dxx + dyy * dyy + dxdy * dxdy);
+          secondPartialDerivative[ix, iy, 0] = dxx/L2;
+          secondPartialDerivative[ix, iy, 1] = dyy/L2;
+          secondPartialDerivative[ix, iy, 2] = dxdy/L2;
+        }
+      }
+
+      float[,] maxEigenValue = new float[lenX, lenY];
+      for (int ix = 0; ix < lenX; ix++)
+      {
+        for (int iy = 0; iy < lenY; iy++)
+        {
+          float[,] hessian = new float[2, 2];
+          hessian[0, 0] = secondPartialDerivative[ix, iy, 0];
+          hessian[1, 1] = secondPartialDerivative[ix, iy, 1];
+          hessian[0, 1] = hessian[1, 0] = secondPartialDerivative[ix, iy, 2];
+          maxEigenValue[ix, iy] = Eigen.GetMaxEigenValue2x2(hessian);
+        }
+      }
+
+      for (int ix = 0; ix < lenX; ix++)
+      {
+        for (int iy = 0; iy < lenY; iy++)
+        {
+          lcsField[ix, iy, 0] = (maxEigenValue[ix, iy] <= 0) ? 1 : 0;
+        }
+      }
     }
 
     public void ShowFTLE()
@@ -96,6 +133,11 @@ namespace Arihara.GuideSmoke
     public void WriteLCS(string path, Vector3[,,] pos)
     {
       FileIO.WriteLCSFile(path, pos, lcsField, lenX, lenY, lenZ);
+    }
+
+    public void WriteFTLE(string path, Vector3[,,] pos)
+    {
+      FileIO.WriteFTLEFile(path, 1000, pos, this.ftleField, lenX, lenY, lenZ);
     }
 
     private float CalcMedian()
@@ -143,12 +185,12 @@ namespace Arihara.GuideSmoke
         }
       }
       ftleField = tmp;
+    }
 
-      float GetCoordValue2D(int ix, int iy)
-      {
-        if ((ix * (ix - lenX)) >= 0 || (iy * (iy - lenY)) >= 0) return 0;
-        else return ftleField[ix, iy, 0];
-      }
+    private float GetCoordValue2D(int ix, int iy)
+    {
+      if ((ix * (ix - lenX)) >= 0 || (iy * (iy - lenY)) >= 0) return 0;
+      else return ftleField[ix, iy, 0];
     }
   }
 }
