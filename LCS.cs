@@ -70,6 +70,15 @@ namespace Arihara.GuideSmoke
       Console.WriteLine("Used Median Value: {0}", median);
     }
 
+    public void LcsByHessian()
+    {
+      for (int i = 0; i < 1; i++)
+      {
+        GaussianFilter2D();
+      }
+      ShowFTLE();
+    }
+
     public void ShowFTLE()
     {
       for (int ix = 0; ix < lenX; ix++)
@@ -104,6 +113,42 @@ namespace Arihara.GuideSmoke
       }
       Array.Sort(arr);
       return arr[(lenX * lenY * lenZ) / 2];
+    }
+
+    private void GaussianFilter2D()
+    {
+      if (lenZ > 1) return;
+
+      float[,] filter = {
+        { 1f / 256,  4f / 256,  6f / 256,  4f / 256, 1f / 256 },
+        { 4f / 256, 16f / 256, 24f / 256, 16f / 256, 4f / 256 },
+        { 6f / 256, 24f / 256, 36f / 256, 24f / 256, 6f / 256 },
+        { 4f / 256, 16f / 256, 24f / 256, 16f / 256, 4f / 256 },
+        { 1f / 256,  4f / 256,  6f / 256,  4f / 256, 1f / 256 },
+      };
+
+      float[,,] tmp = new float[lenX, lenY, 1];
+
+      for (int ix = 0; ix < lenX; ix++)
+      {
+        for (int iy = 0; iy < lenY; iy++)
+        {
+          for (int fx = -2; fx < 3; fx++)
+          {
+            for (int fy = -2; fy < 3; fy++)
+            {
+              tmp[ix, iy, 0] += filter[fx + 2, fy + 2] * GetCoordValue2D(ix + fx, iy + fy);
+            }
+          }
+        }
+      }
+      ftleField = tmp;
+
+      float GetCoordValue2D(int ix, int iy)
+      {
+        if ((ix * (ix - lenX)) >= 0 || (iy * (iy - lenY)) >= 0) return 0;
+        else return ftleField[ix, iy, 0];
+      }
     }
   }
 }
