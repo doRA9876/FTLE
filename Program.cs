@@ -24,7 +24,7 @@ namespace Arihara.GuideSmoke
         string outputLCS = string.Format("./data/LCS/lcs-{0}.txt", t);
         string outputClassification = string.Format("./data/LCS/class-{0}.txt", t);
         LCS lcs = new LCS(ftle.GetFTLE(t), false);
-        lcs.LcsByHessian(5, 0.01f, true);
+        lcs.LcsByHessian(5, 0.01f, true, 20);
         // lcs.LcsByThreshold();
         lcs.WriteLCS(outputLCS, ftle.GetOriginalPos());
         // lcs.WriteClasscification(outputClassification, ftle.GetOriginalPos());

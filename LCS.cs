@@ -71,10 +71,10 @@ namespace Arihara.GuideSmoke
       Console.WriteLine("Used Median Value: {0}", median);
     }
 
-    public void LcsByHessian(int gaussinaFilterCount, float kappa, bool doSkeltonize)
+    public void LcsByHessian(int filterApplyIter, float kappa, bool doSkeltonize, int skeletonIter)
     {
-      FtleClassification(gaussinaFilterCount, kappa);
-      if (doSkeltonize) Skeletonization();
+      FtleClassification(filterApplyIter, kappa);
+      if (doSkeltonize) Skeletonization(skeletonIter);
 
       lcsField = new int[lenX, lenY, 1];
       for (int ix = 0; ix < lenX; ix++)
@@ -153,7 +153,7 @@ namespace Arihara.GuideSmoke
       }
     }
 
-    public void Skeletonization()
+    public void Skeletonization(int iteration)
     {
       const int N = 0b0001;
       const int E = 0b0010;
@@ -164,41 +164,38 @@ namespace Arihara.GuideSmoke
       const int NE = N | E;
       const int SW = S | W;
 
-      int[] dir = {NW, SE, NE, SW};
-
+      int[] dir = { NW, SE, NE, SW };
       int[,] Template1 = {
         {  0,  0,  0},
         {  2,  1,  2},
         {  2,  1,  2},
       };
-
       int[,] Template2 = {
         {  0,  2,  2},
         {  0,  1,  1},
         {  0,  2,  2},
       };
-
       int[,] Template3 = {
         {  0,  0, -1},
         {  0,  1,  1},
         { -1,  1, -1},
       };
 
-      int[,] bounderPixel = new int[lenX, lenY];
-      for (int ix = 0; ix < lenX; ix++)
+      for (int n = 1; n < iteration; n++)
       {
-        for (int iy = 0; iy < lenY; iy++)
+        int[,] bounderPixel = new int[lenX, lenY];
+        for (int ix = 0; ix < lenX; ix++)
         {
-          if (classification[ix, iy] == 0) continue;
-          if (classification[ix, iy + 1] == 0) bounderPixel[ix, iy] |= N;
-          if (classification[ix, iy - 1] == 0) bounderPixel[ix, iy] |= S;
-          if (classification[ix + 1, iy] == 0) bounderPixel[ix, iy] |= E;
-          if (classification[ix - 1, iy] == 0) bounderPixel[ix, iy] |= W;
+          for (int iy = 0; iy < lenY; iy++)
+          {
+            if (classification[ix, iy] == 0) continue;
+            if (classification[ix, iy + 1] == 0) bounderPixel[ix, iy] |= N;
+            if (classification[ix, iy - 1] == 0) bounderPixel[ix, iy] |= S;
+            if (classification[ix + 1, iy] == 0) bounderPixel[ix, iy] |= E;
+            if (classification[ix - 1, iy] == 0) bounderPixel[ix, iy] |= W;
+          }
         }
-      }
 
-      for (int n = 0; n < 20; n++)
-      {
         /* i = 0:NW, 1:SE, 2:NE, 3:SW */
         for (int i = 0; i < 4; i++)
         {
