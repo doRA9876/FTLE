@@ -23,11 +23,11 @@ namespace Arihara.GuideSmoke
         string outputLCS = string.Format("./data/LCS/lcs-{0}.txt", t);
         string outputClassification = string.Format("./data/LCS/class-{0}.txt", t);
         LCS lcs = new LCS(ftle.GetFTLE(t), false);
-        lcs.FtleClassificationByHessian(5, 0.01f);
+        lcs.LcsByHessian(5, 0.01f, true);
         // lcs.LcsByThreshold();
-        // lcs.WriteLCS(outputLCS, ftle.GetOriginalPos());
-        lcs.WriteClasscification(outputClassification, ftle.GetOriginalPos());
-        ftle.WriteFTLE(outputFTLE, t);
+        lcs.WriteLCS(outputLCS, ftle.GetOriginalPos());
+        // lcs.WriteClasscification(outputClassification, ftle.GetOriginalPos());
+        // ftle.WriteFTLE(outputFTLE, t);
         Console.WriteLine("End FTLE Calculation");
       }
     }

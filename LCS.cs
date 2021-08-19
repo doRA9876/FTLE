@@ -17,7 +17,7 @@ namespace Arihara.GuideSmoke
       lenY = ftle.GetLength(1);
       lenZ = ftle.GetLength(2);
       this.ftleField = ftle;
-      if(doNormalization) NormalizeFTLE();
+      if (doNormalization) NormalizeFTLE();
     }
 
     private void NormalizeFTLE()
@@ -71,12 +71,27 @@ namespace Arihara.GuideSmoke
       Console.WriteLine("Used Median Value: {0}", median);
     }
 
+    public void LcsByHessian(int gaussinaFilterCount, float kappa, bool doSkeltonize)
+    {
+      FtleClassification(gaussinaFilterCount, kappa);
+      if (doSkeltonize) Skeletonization();
+
+      lcsField = new int[lenX, lenY, 1];
+      for (int ix = 0; ix < lenX; ix++)
+      {
+        for (int iy = 0; iy < lenY; iy++)
+        {
+          lcsField[ix, iy, 0] = classification[ix, iy];
+        }
+      }
+    }
+
     /*
      * refer : https://ieeexplore.ieee.org/document/5613499
      */
-    public void FtleClassificationByHessian(int filterCount, float kappa)
+    public void FtleClassification(int filterCount, float kappa)
     {
-      if(lenZ > 1) 
+      if (lenZ > 1)
       {
         Console.WriteLine("This function only supports 2D.");
         return;
@@ -94,6 +109,7 @@ namespace Arihara.GuideSmoke
       {
         for (int iy = 0; iy < lenY; iy++)
         {
+          // refer : https://www.ics.nara-wu.ac.jp/~kako/teaching/na/chap15.pdf
           float dxx = (GetCoordValue2D(ix + 1, iy) + GetCoordValue2D(ix - 1, iy) - 2 * GetCoordValue2D(ix, iy)) / 1;
           float dyy = (GetCoordValue2D(ix, iy + 1) + GetCoordValue2D(ix, iy - 1) - 2 * GetCoordValue2D(ix, iy)) / 1;
           float dxdy = (GetCoordValue2D(ix + 1, iy + 1) - GetCoordValue2D(ix - 1, iy + 1)
@@ -123,7 +139,7 @@ namespace Arihara.GuideSmoke
       {
         for (int iy = 0; iy < lenY; iy++)
         {
-          if(ftleField[ix,iy, 0] > maxFTLE) maxFTLE = ftleField[ix, iy,0];
+          if (ftleField[ix, iy, 0] > maxFTLE) maxFTLE = ftleField[ix, iy, 0];
         }
       }
 
@@ -131,9 +147,108 @@ namespace Arihara.GuideSmoke
       {
         for (int iy = 0; iy < lenY; iy++)
         {
-          if(maxEigenValue[ix, iy] <= kappa && (maxFTLE * 0.3f) <= ftleField[ix,iy,0]) classification[ix, iy] = 1;
+          if (maxEigenValue[ix, iy] <= kappa && (maxFTLE * 0.3f) <= ftleField[ix, iy, 0]) classification[ix, iy] = 1;
           else classification[ix, iy] = 0;
         }
+      }
+    }
+
+    public void Skeletonization()
+    {
+      const int N = 0b0001;
+      const int E = 0b0010;
+      const int S = 0b0100;
+      const int W = 0b1000;
+      const int NW = N | W;
+      const int SE = S | E;
+      const int NE = N | E;
+      const int SW = S | W;
+
+      int[,] Template1 = {
+        {  0,  0,  0},
+        {  2,  1,  2},
+        {  2,  1,  2},
+      };
+
+      int[,] Template2 = {
+        {  0,  2,  2},
+        {  0,  1,  1},
+        {  0,  2,  2},
+      };
+
+      int[,] Template3 = {
+        {  0,  0, -1},
+        {  0,  1,  1},
+        { -1,  1, -1},
+      };
+
+      int[,] bounderPixel = new int[lenX, lenY];
+      for (int ix = 0; ix < lenX; ix++)
+      {
+        for (int iy = 0; iy < lenY; iy++)
+        {
+          if (classification[ix, iy] == 0) continue;
+          if (classification[ix, iy + 1] == 0) bounderPixel[ix, iy] |= N;
+          if (classification[ix, iy - 1] == 0) bounderPixel[ix, iy] |= S;
+          if (classification[ix + 1, iy] == 0) bounderPixel[ix, iy] |= E;
+          if (classification[ix - 1, iy] == 0) bounderPixel[ix, iy] |= W;
+        }
+      }
+
+      /* NW */
+      for (int ix = 0; ix < lenX; ix++)
+      {
+        for (int iy = 0; iy < lenY; iy++)
+        {
+          if ((bounderPixel[ix, iy] & NW) == 0) continue;
+          if (isMatchTemplate(ix, iy, Template1))
+          {
+            classification[ix, iy] = 0;
+            continue;
+          }
+
+          if (isMatchTemplate(ix, iy, Template2))
+          {
+            classification[ix, iy] = 0;
+            continue;
+          }
+
+          if (isMatchTemplate(ix, iy, Template3))
+          {
+            classification[ix, iy] = 0;
+            continue;
+          }
+        }
+      }
+
+
+      bool isMatchTemplate(int cx, int cy, int[,] template)
+      {
+        bool isWildcardX = false;
+        for (int ix = -1; ix < 2; ix++)
+        {
+          for (int iy = -1; iy < 2; iy++)
+          {
+            int x = cx + ix;
+            int y = cy + iy;
+            int templateNum = template[ix + 1, iy + 1];
+            switch (templateNum)
+            {
+              case 0:
+              case 1:
+                if (classification[x, y] == templateNum) continue;
+                else return false;
+
+              case 2:
+                if (classification[x, y] == 1) isWildcardX = true;
+                continue;
+
+              default:
+                continue;
+            }
+          }
+        }
+        return isWildcardX;
       }
     }
 
@@ -153,7 +268,7 @@ namespace Arihara.GuideSmoke
 
     public void WriteLCS(string path, Vector3[,,] pos)
     {
-      if(lcsField == null) 
+      if (lcsField == null)
       {
         Console.WriteLine("LCS is not calulated.");
         return;
@@ -168,13 +283,13 @@ namespace Arihara.GuideSmoke
 
     public void WriteClasscification(string path, Vector3[,,] pos)
     {
-      if(classification == null)
+      if (classification == null)
       {
         Console.WriteLine("Classification is not calculated.");
         return;
       }
 
-      int[,,] classify = new int[lenX, lenY, 1]; 
+      int[,,] classify = new int[lenX, lenY, 1];
       for (int ix = 0; ix < lenX; ix++)
       {
         for (int iy = 0; iy < lenY; iy++)
