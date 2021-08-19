@@ -21,11 +21,12 @@ namespace Arihara.GuideSmoke
         // ftle.ShowFTLE(t);
         string outputFTLE = string.Format("./data/FTLE/ftle-{0}.txt", t);
         string outputLCS = string.Format("./data/LCS/lcs-{0}.txt", t);
-        LCS lcs = new LCS(ftle.GetFTLE(t));
-        lcs.LcsByHessian2D();
+        string outputClassification = string.Format("./data/LCS/class-{0}.txt", t);
+        LCS lcs = new LCS(ftle.GetFTLE(t), false);
+        lcs.FtleClassificationByHessian(5, 0.01f);
         // lcs.LcsByThreshold();
-        lcs.WriteLCS(outputLCS, ftle.GetOriginalPos());
-        lcs.WriteFTLE("./data/LCS/ftle-1000.txt", ftle.GetOriginalPos());
+        // lcs.WriteLCS(outputLCS, ftle.GetOriginalPos());
+        lcs.WriteClasscification(outputClassification, ftle.GetOriginalPos());
         ftle.WriteFTLE(outputFTLE, t);
         Console.WriteLine("End FTLE Calculation");
       }

@@ -8,16 +8,16 @@ namespace Arihara.GuideSmoke
   {
     private int lenX, lenY, lenZ;
     private float[,,] ftleField;
-    private int[,,] lcsField;
+    private int[,,] lcsField = null;
+    private int[,] classification = null;
 
-    public LCS(float[,,] ftle)
+    public LCS(float[,,] ftle, bool doNormalization)
     {
       lenX = ftle.GetLength(0);
       lenY = ftle.GetLength(1);
       lenZ = ftle.GetLength(2);
       this.ftleField = ftle;
-      lcsField = new int[lenX, lenY, lenZ];
-      NormalizeFTLE();
+      if(doNormalization) NormalizeFTLE();
     }
 
     private void NormalizeFTLE()
@@ -51,6 +51,7 @@ namespace Arihara.GuideSmoke
 
     public void LcsByThreshold(float threshold)
     {
+      lcsField = new int[lenX, lenY, lenZ];
       for (int ix = 0; ix < lenX; ix++)
       {
         for (int iy = 0; iy < lenY; iy++)
@@ -70,9 +71,20 @@ namespace Arihara.GuideSmoke
       Console.WriteLine("Used Median Value: {0}", median);
     }
 
-    public void LcsByHessian2D()
+    /*
+     * refer : https://ieeexplore.ieee.org/document/5613499
+     */
+    public void FtleClassificationByHessian(int filterCount, float kappa)
     {
-      for (int i = 0; i < 5; i++)
+      if(lenZ > 1) 
+      {
+        Console.WriteLine("This function only supports 2D.");
+        return;
+      }
+
+      classification = new int[lenX, lenY];
+
+      for (int i = 0; i < filterCount; i++)
       {
         GaussianFilter2D();
       }
@@ -82,15 +94,14 @@ namespace Arihara.GuideSmoke
       {
         for (int iy = 0; iy < lenY; iy++)
         {
-          float dxx = (GetCoordValue2D(ix + 1, iy) - GetCoordValue2D(ix - 1, iy)) / 2;
-          float dyy = (GetCoordValue2D(ix, iy + 1) - GetCoordValue2D(ix, iy - 1)) / 2;
+          float dxx = (GetCoordValue2D(ix + 1, iy) + GetCoordValue2D(ix - 1, iy) - 2 * GetCoordValue2D(ix, iy)) / 1;
+          float dyy = (GetCoordValue2D(ix, iy + 1) + GetCoordValue2D(ix, iy - 1) - 2 * GetCoordValue2D(ix, iy)) / 1;
           float dxdy = (GetCoordValue2D(ix + 1, iy + 1) - GetCoordValue2D(ix - 1, iy + 1)
                       - GetCoordValue2D(ix + 1, iy - 1) + GetCoordValue2D(ix - 1, iy - 1)) / 1;
 
-          float L2 = (float)Math.Sqrt(dxx * dxx + dyy * dyy + dxdy * dxdy);
-          secondPartialDerivative[ix, iy, 0] = dxx/L2;
-          secondPartialDerivative[ix, iy, 1] = dyy/L2;
-          secondPartialDerivative[ix, iy, 2] = dxdy/L2;
+          secondPartialDerivative[ix, iy, 0] = dxx;
+          secondPartialDerivative[ix, iy, 1] = dyy;
+          secondPartialDerivative[ix, iy, 2] = dxdy;
         }
       }
 
@@ -107,11 +118,21 @@ namespace Arihara.GuideSmoke
         }
       }
 
+      float maxFTLE = 0;
       for (int ix = 0; ix < lenX; ix++)
       {
         for (int iy = 0; iy < lenY; iy++)
         {
-          lcsField[ix, iy, 0] = (maxEigenValue[ix, iy] <= 0) ? 1 : 0;
+          if(ftleField[ix,iy, 0] > maxFTLE) maxFTLE = ftleField[ix, iy,0];
+        }
+      }
+
+      for (int ix = 0; ix < lenX; ix++)
+      {
+        for (int iy = 0; iy < lenY; iy++)
+        {
+          if(maxEigenValue[ix, iy] <= kappa && (maxFTLE * 0.3f) <= ftleField[ix,iy,0]) classification[ix, iy] = 1;
+          else classification[ix, iy] = 0;
         }
       }
     }
@@ -132,12 +153,36 @@ namespace Arihara.GuideSmoke
 
     public void WriteLCS(string path, Vector3[,,] pos)
     {
+      if(lcsField == null) 
+      {
+        Console.WriteLine("LCS is not calulated.");
+        return;
+      }
       FileIO.WriteLCSFile(path, pos, lcsField, lenX, lenY, lenZ);
     }
 
     public void WriteFTLE(string path, Vector3[,,] pos)
     {
       FileIO.WriteFTLEFile(path, 1000, pos, this.ftleField, lenX, lenY, lenZ);
+    }
+
+    public void WriteClasscification(string path, Vector3[,,] pos)
+    {
+      if(classification == null)
+      {
+        Console.WriteLine("Classification is not calculated.");
+        return;
+      }
+
+      int[,,] classify = new int[lenX, lenY, 1]; 
+      for (int ix = 0; ix < lenX; ix++)
+      {
+        for (int iy = 0; iy < lenY; iy++)
+        {
+          classify[ix, iy, 0] = classification[ix, iy];
+        }
+      }
+      FileIO.WriteLCSFile(path, pos, classify, lenX, lenY, 1);
     }
 
     private float CalcMedian()
