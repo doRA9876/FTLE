@@ -164,6 +164,8 @@ namespace Arihara.GuideSmoke
       const int NE = N | E;
       const int SW = S | W;
 
+      int[] dir = {NW, SE, NE, SW};
+
       int[,] Template1 = {
         {  0,  0,  0},
         {  2,  1,  2},
@@ -195,28 +197,34 @@ namespace Arihara.GuideSmoke
         }
       }
 
-      /* NW */
-      for (int ix = 0; ix < lenX; ix++)
+      for (int n = 0; n < 20; n++)
       {
-        for (int iy = 0; iy < lenY; iy++)
+        /* i = 0:NW, 1:SE, 2:NE, 3:SW */
+        for (int i = 0; i < 4; i++)
         {
-          if ((bounderPixel[ix, iy] & NW) == 0) continue;
-          if (isMatchTemplate(ix, iy, Template1))
+          for (int ix = 0; ix < lenX; ix++)
           {
-            classification[ix, iy] = 0;
-            continue;
-          }
+            for (int iy = 0; iy < lenY; iy++)
+            {
+              if ((bounderPixel[ix, iy] & dir[i]) == 0) continue;
+              if (isMatchTemplate(ix, iy, Rotation(i, Template1)))
+              {
+                classification[ix, iy] = 0;
+                continue;
+              }
 
-          if (isMatchTemplate(ix, iy, Template2))
-          {
-            classification[ix, iy] = 0;
-            continue;
-          }
+              if (isMatchTemplate(ix, iy, Rotation(i, Template2)))
+              {
+                classification[ix, iy] = 0;
+                continue;
+              }
 
-          if (isMatchTemplate(ix, iy, Template3))
-          {
-            classification[ix, iy] = 0;
-            continue;
+              if (isMatchTemplate(ix, iy, Rotation(i, Template3)))
+              {
+                classification[ix, iy] = 0;
+                continue;
+              }
+            }
           }
         }
       }
@@ -249,6 +257,27 @@ namespace Arihara.GuideSmoke
           }
         }
         return isWildcardX;
+      }
+
+      int[,] Rotation(int num, int[,] src)
+      {
+        int[,] dst = src;
+
+        for (int i = 0; i < num; i++)
+        {
+          int[,] tmp = new int[lenX, lenY];
+          tmp[2, 0] = dst[0, 0];
+          tmp[1, 0] = dst[0, 1];
+          tmp[0, 0] = dst[0, 2];
+          tmp[2, 1] = dst[1, 0];
+          tmp[1, 1] = dst[1, 1];
+          tmp[0, 1] = dst[1, 2];
+          tmp[2, 2] = dst[2, 0];
+          tmp[1, 2] = dst[2, 1];
+          tmp[0, 2] = dst[2, 2];
+          dst = tmp;
+        }
+        return dst;
       }
     }
 
