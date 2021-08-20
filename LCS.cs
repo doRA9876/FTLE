@@ -71,9 +71,9 @@ namespace Arihara.GuideSmoke
       Console.WriteLine("Used Median Value: {0}", median);
     }
 
-    public void LcsByHessian(int filterApplyIter, float kappa, bool doSkeltonize, int skeletonIter)
+    public void LcsByHessian(int filterApplyIter, float kappa, float threshold, bool doSkeltonize, int skeletonIter)
     {
-      FtleClassification(filterApplyIter, kappa);
+      FtleClassification(filterApplyIter, kappa, threshold);
       if (doSkeltonize) Skeletonization(skeletonIter);
 
       lcsField = new int[lenX, lenY, 1];
@@ -89,7 +89,7 @@ namespace Arihara.GuideSmoke
     /*
      * refer : https://ieeexplore.ieee.org/document/5613499
      */
-    public void FtleClassification(int filterCount, float kappa)
+    public void FtleClassification(int filterCount, float kappa, float threshold) 
     {
       if (lenZ > 1)
       {
@@ -147,7 +147,7 @@ namespace Arihara.GuideSmoke
       {
         for (int iy = 0; iy < lenY; iy++)
         {
-          if (maxEigenValue[ix, iy] <= kappa && (maxFTLE * 0.3f) <= ftleField[ix, iy, 0]) classification[ix, iy] = 1;
+          if (maxEigenValue[ix, iy] <= kappa && (maxFTLE * threshold) <= ftleField[ix, iy, 0]) classification[ix, iy] = 1;
           else classification[ix, iy] = 0;
         }
       }
@@ -304,7 +304,7 @@ namespace Arihara.GuideSmoke
 
     public void WriteFTLE(string path, Vector3[,,] pos)
     {
-      FileIO.WriteFTLEFile(path, 1000, pos, this.ftleField, lenX, lenY, lenZ);
+      FileIO.WriteFTLEFile(path, 9999, pos, this.ftleField, lenX, lenY, lenZ);
     }
 
     public void WriteClasscification(string path, Vector3[,,] pos)

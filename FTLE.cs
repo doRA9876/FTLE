@@ -298,8 +298,8 @@ namespace Arihara.GuideSmoke
     {
       int delta = (t_end - t_start);
 
-      Vector3 velocity = Lerp2D(t_start, position);
-      // Vector3 velocity = RungeKutta(t_start, position);
+      // Vector3 velocity = Lerp2D(t_start, position);
+      Vector3 velocity = RungeKutta(t_start, position);
       return position + velocity * direction * delta * h;
 
       Vector3 RungeKutta(int t, Vector3 pos)
