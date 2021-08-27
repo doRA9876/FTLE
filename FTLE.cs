@@ -94,6 +94,16 @@ namespace Arihara.GuideSmoke
       isCalculatedTime[t] = true;
     }
 
+    public float[,,] GetFTLE(int t)
+    {
+      return ftleField[t];
+    }
+
+    public Vector3[,,] GetOriginalPos()
+    {
+      return originalPosition;
+    }
+
     public void WriteFTLE(string path, int t)
     {
       if (!isCalculatedTime[t]) CalcFTLE(t);
@@ -288,8 +298,8 @@ namespace Arihara.GuideSmoke
     {
       int delta = (t_end - t_start);
 
-      Vector3 velocity = Lerp2D(t_start, position);
-      // Vector3 velocity = RungeKutta(t_start, position);
+      // Vector3 velocity = Lerp2D(t_start, position);
+      Vector3 velocity = RungeKutta(t_start, position);
       return position + velocity * direction * delta * h;
 
       Vector3 RungeKutta(int t, Vector3 pos)
