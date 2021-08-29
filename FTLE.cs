@@ -25,7 +25,7 @@ namespace Arihara.GuideSmoke
     int x_min, x_max, y_min, y_max, z_min, z_max;
 
 
-    int ftleResolution = 64;
+    int ftleResolution = 128;
     int delta_t = 1;
     int integral_T = 10;
 
@@ -283,7 +283,7 @@ namespace Arihara.GuideSmoke
         tensor2D[1, 0] = tensor2D[0, 1] = a * b + c * d;
         tensor2D[1, 1] = (float)Math.Pow(b, 2) + (float)Math.Pow(d, 2);
 
-        double result = (float)Math.Log(Eigen.GetMaxEigenValue2x2(tensor2D)) / Math.Abs(integral_T / delta_t);
+        double result = (float)Math.Log(Math.Sqrt(Eigen.GetMaxEigenValue2x2(tensor2D))) / Math.Abs(integral_T / delta_t);
 
         if (result != double.NegativeInfinity) return (float)result;
         else return 0;

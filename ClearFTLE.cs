@@ -253,26 +253,25 @@ namespace Arihara.GuideSmoke
       else return false;
     }
 
-
     float CalculateFTLE2D(Vector3[,,,] flowmap, int ix, int iy)
     {
       if ((ix * (ix - (ftleResolution - 1))) < 0 && (iy * (iy - (ftleResolution - 1))) < 0)
       {
         /*
-        00 01
-        10 11
+        a b
+        c d
         */
-        float a00 = (flowmap[ix, iy, 0, 0].X - flowmap[ix, iy, 0, 1].X) / (2 * perturbation);
-        float a01 = (flowmap[ix, iy, 0, 2].X - flowmap[ix, iy, 0, 3].X) / (2 * perturbation);
-        float a10 = (flowmap[ix, iy, 0, 0].Y - flowmap[ix, iy, 0, 1].Y) / (2 * perturbation);
-        float a11 = (flowmap[ix, iy, 0, 2].Y - flowmap[ix, iy, 0, 3].Y) / (2 * perturbation);
+        float a = (flowmap[ix, iy, 0, 0].X - flowmap[ix, iy, 0, 1].X) / (2 * perturbation);
+        float b = (flowmap[ix, iy, 0, 2].X - flowmap[ix, iy, 0, 3].X) / (2 * perturbation);
+        float c = (flowmap[ix, iy, 0, 0].Y - flowmap[ix, iy, 0, 1].Y) / (2 * perturbation);
+        float d = (flowmap[ix, iy, 0, 2].Y - flowmap[ix, iy, 0, 3].Y) / (2 * perturbation);
 
         float[,] tensor2D = new float[2, 2];
-        tensor2D[0, 0] = (float)Math.Pow(a00, 2) + (float)Math.Pow(a01, 2);
-        tensor2D[1, 0] = tensor2D[0, 1] = a00 * a01 + a10 * a11;
-        tensor2D[1, 1] = (float)Math.Pow(a11, 2) + (float)Math.Pow(a10, 2);
+        tensor2D[0, 0] = (float)Math.Pow(a, 2) + (float)Math.Pow(c, 2);
+        tensor2D[1, 0] = tensor2D[0, 1] = a * b + c * d;
+        tensor2D[1, 1] = (float)Math.Pow(b, 2) + (float)Math.Pow(d, 2);
 
-        double result = (float)Math.Log(Eigen.GetMaxEigenValue2x2(tensor2D)) / Math.Abs(integral_T / delta_t);
+        double result = (float)Math.Log(Math.Sqrt(Eigen.GetMaxEigenValue2x2(tensor2D))) / Math.Abs(integral_T / delta_t);
 
         if (result != double.NegativeInfinity) return (float)result;
         else return 0;

@@ -11,15 +11,19 @@ namespace Arihara.GuideSmoke
 {
   class Program
   {
+    static string MATLAB_FTLE_Path = "D:/Projects/MATLAB/FTLE/results";
+    static string MATLAB_LCS_Path = "D:/Projects/MATLAB/LCS/results";
     static void Main(string[] args)
     {
+      // Sample();
       SampleClear();
       // CalcDataset();
     }
 
     static void SampleClear()
     {
-      string folderPath = string.Format("./data/ConstVelField_128x128x1_Wall");
+      // string folderPath = string.Format("./data/ConstVelField_128x128x1");
+      string folderPath = string.Format("./data/ObsSphere_64x64x1_VC");
       ClearFTLE cFTLE = new ClearFTLE(folderPath, 1000, -1);
 
       for (int t = 250; t < 651; t += 10)
@@ -27,11 +31,11 @@ namespace Arihara.GuideSmoke
         Console.WriteLine("Start FTLE Calculation : t = {0}", t);
         cFTLE.CalcFTLE(t);
         // ftle.ShowFTLE(t);
-        string outputFTLE = string.Format("./data/FTLE/ftle-{0}.txt", t);
-        string outputLCS = string.Format("./data/LCS/lcs-{0}.txt", t);
+        string outputFTLE = MATLAB_FTLE_Path + '/' + string.Format("ftle-{0}.txt", t);
+        string outputLCS = MATLAB_LCS_Path + '/' + string.Format("lcs-{0}.txt", t);
         string outputClassification = string.Format("./data/LCS/class-{0}.txt", t);
         LCS lcs = new LCS(cFTLE.GetFTLE(t), false);
-        lcs.LcsByHessian(5, 0.01f, 0.5f, true, 20);
+        lcs.LcsByHessian(5, 0.01f, 0.5f, false, 20);
         // lcs.LcsByThreshold();
         lcs.WriteLCS(outputLCS, cFTLE.GetOriginalPos());
         // lcs.WriteFTLE(outputFTLE, cFTLE.GetOriginalPos());
@@ -43,23 +47,26 @@ namespace Arihara.GuideSmoke
 
     static void Sample()
     {
-      string folderPath = string.Format("./data/ObsSphere_64x64x1");
-      FTLE ftle = new FTLE(folderPath, 1000, -1);
+      string folderPath = string.Format("./data/ConstVelField_128x128x1");
+      // string folderPath = string.Format("./data/ObsSphere_64x64x1");
+      FTLE ftle = new FTLE(folderPath, 1000, 1);
+      bool isNormalize = true;
+      bool isSkeletonize = false;
 
-      for (int t = 200; t < 601; t += 50)
+      for (int t = 250; t < 651; t += 10)
       {
         Console.WriteLine("Start FTLE Calculation : t = {0}", t);
         ftle.CalcFTLE(t);
         // ftle.ShowFTLE(t);
-        string outputFTLE = string.Format("./data/FTLE/ftle-{0}.txt", t);
-        string outputLCS = string.Format("./data/LCS/lcs-{0}.txt", t);
+        string outputFTLE = MATLAB_FTLE_Path + '/' + string.Format("ftle-{0}.txt", t);
+        string outputLCS = MATLAB_LCS_Path + '/' + string.Format("lcs-{0}.txt", t);
         string outputClassification = string.Format("./data/LCS/class-{0}.txt", t);
-        LCS lcs = new LCS(ftle.GetFTLE(t), false);
-        lcs.LcsByHessian(5, 0.01f, 0.5f, true, 20);
-        // lcs.LcsByThreshold();
+        LCS lcs = new LCS(ftle.GetFTLE(t), isNormalize);
+        lcs.LcsByHessian(0, 0.01f, 0.3f, isSkeletonize, 5);
+        // lcs.LcsByThreshold(0.5f);
         lcs.WriteLCS(outputLCS, ftle.GetOriginalPos());
-        lcs.WriteFTLE(outputFTLE, ftle.GetOriginalPos());
-        lcs.WriteClasscification(outputClassification, ftle.GetOriginalPos());
+        // lcs.WriteFTLE(outputFTLE, ftle.GetOriginalPos());
+        // lcs.WriteClasscification(outputClassification, ftle.GetOriginalPos());
         ftle.WriteFTLE(outputFTLE, t);
         Console.WriteLine("End FTLE Calculation");
       }
