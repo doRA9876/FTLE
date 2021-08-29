@@ -270,18 +270,18 @@ namespace Arihara.GuideSmoke
         float scaleX = (float)(x_max + 1) / ftleResolution;
         float scaleY = (float)(y_max + 1) / ftleResolution;
         /*
-        00 01
-        10 11
+        a b
+        c d
         */
-        float a00 = (flowmap[ix + 1, iy, 0].X - flowmap[ix - 1, iy, 0].X) / (2 * scaleX);
-        float a01 = (flowmap[ix, iy + 1, 0].X - flowmap[ix, iy - 1, 0].X) / (2 * scaleY);
-        float a10 = (flowmap[ix + 1, iy, 0].Y - flowmap[ix - 1, iy, 0].Y) / (2 * scaleX);
-        float a11 = (flowmap[ix, iy + 1, 0].Y - flowmap[ix, iy - 1, 0].Y) / (2 * scaleY);
+        float a = (flowmap[ix + 1, iy, 0].X - flowmap[ix - 1, iy, 0].X) / (2 * scaleX);
+        float b = (flowmap[ix, iy + 1, 0].X - flowmap[ix, iy - 1, 0].X) / (2 * scaleY);
+        float c = (flowmap[ix + 1, iy, 0].Y - flowmap[ix - 1, iy, 0].Y) / (2 * scaleX);
+        float d = (flowmap[ix, iy + 1, 0].Y - flowmap[ix, iy - 1, 0].Y) / (2 * scaleY);
 
         float[,] tensor2D = new float[2, 2];
-        tensor2D[0, 0] = (float)Math.Pow(a00, 2) + (float)Math.Pow(a01, 2);
-        tensor2D[1, 0] = tensor2D[0, 1] = a00 * a01 + a10 * a11;
-        tensor2D[1, 1] = (float)Math.Pow(a11, 2) + (float)Math.Pow(a10, 2);
+        tensor2D[0, 0] = (float)Math.Pow(a, 2) + (float)Math.Pow(c, 2);
+        tensor2D[1, 0] = tensor2D[0, 1] = a * b + c * d;
+        tensor2D[1, 1] = (float)Math.Pow(b, 2) + (float)Math.Pow(d, 2);
 
         double result = (float)Math.Log(Eigen.GetMaxEigenValue2x2(tensor2D)) / Math.Abs(integral_T / delta_t);
 
