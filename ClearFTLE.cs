@@ -21,8 +21,8 @@ namespace Arihara.GuideSmoke
 
 
     int ftleResolution = 256;
-    int delta_t = 1;
-    int integral_T = 50;
+    float delta_t = 0.1f;
+    float integral_T = 5;
     float perturbation = 0.5f;
 
     string dataFolderPath;
@@ -171,10 +171,10 @@ namespace Arihara.GuideSmoke
         }
       }
 
-      for (int t_integration = 0; t_integration < (integral_T / delta_t); t_integration++)
+      for (int t_integration = 0; t_integration < (int)(integral_T / delta_t); t_integration++)
       {
         int t0 = t + t_integration * direction;
-        int t1 = t0 + delta_t * direction;
+        int t1 = t0 + direction;
 
         if (t0 < 0) continue;
 
@@ -287,11 +287,10 @@ namespace Arihara.GuideSmoke
 
       Vector3 RungeKutta(int t, Vector3 pos)
       {
-        float dt = delta_t;
-        Vector3 v1 = Lerp2D(t, pos) * direction;
-        Vector3 v2 = Lerp2D((int)(t + (dt * direction) / 2), pos + (v1 * dt) / 2) * direction;
-        Vector3 v3 = Lerp2D((int)(t + (dt * direction) / 2), pos + (v2 * dt) / 2) * direction;
-        Vector3 v4 = Lerp2D((int)(t + (dt * direction)), pos + (v3 * dt)) * direction;
+        Vector3 v1 = Lerp2D(t, pos) * direction; //Lerp(t, pos)
+        Vector3 v2 = Lerp2D(t, pos + (v1 * h) / 2) * direction; //Lerp(t, pos)
+        Vector3 v3 = Lerp2D(t + direction, pos + (v2 * h) / 2) * direction; //Lerp(t + direction, pos)
+        Vector3 v4 = Lerp2D(t + direction, pos + (v3 * h)) * direction; //Lerp(t + direction, pos)
         return (v1 + 2 * v2 + 2 * v3 + v4) / 6;
       }
     }
