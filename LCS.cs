@@ -71,9 +71,9 @@ namespace Arihara.GuideSmoke
       Console.WriteLine("Used Median Value: {0}", median);
     }
 
-    public void LcsByHessian(int filterApplyIter, float kappa, float threshold, bool doSkeltonize, int skeletonIter)
+    public void LcsByHessian(float kappa, float threshold, bool doSkeltonize, int skeletonIter)
     {
-      FtleClassification(filterApplyIter, kappa, threshold);
+      FtleClassification(kappa, threshold);
       if (doSkeltonize) Skeletonization(skeletonIter);
 
       lcsField = new int[lenX, lenY, 1];
@@ -89,7 +89,7 @@ namespace Arihara.GuideSmoke
     /*
      * refer : https://ieeexplore.ieee.org/document/5613499
      */
-    public void FtleClassification(int filterCount, float kappa, float threshold) 
+    public void FtleClassification(float kappa, float threshold)
     {
       if (lenZ > 1)
       {
@@ -98,11 +98,6 @@ namespace Arihara.GuideSmoke
       }
 
       classification = new int[lenX, lenY];
-
-      for (int i = 0; i < filterCount; i++)
-      {
-        GaussianFilter2D();
-      }
 
       float[,,] secondPartialDerivative = new float[lenX, lenY, 3]; //[lenX, lenY, (dx^2, dy^2, dxdy)]
       for (int ix = 0; ix < lenX; ix++)
@@ -153,6 +148,18 @@ namespace Arihara.GuideSmoke
       }
     }
 
+    public void GaussianFilter(int iter)
+    {
+      if (lenZ == 1)
+      {
+        for (int i = 0; i < iter; i++)
+        {
+          GaussianFilter2D();
+        }
+      }
+
+    }
+
     public void Skeletonization(int iteration)
     {
       const int N = 0b0001;
@@ -184,9 +191,9 @@ namespace Arihara.GuideSmoke
       for (int n = 1; n < iteration; n++)
       {
         int[,] bounderPixel = new int[lenX, lenY];
-        for (int ix = 0; ix < lenX; ix++)
+        for (int ix = 1; ix < (lenX - 1); ix++)
         {
-          for (int iy = 0; iy < lenY; iy++)
+          for (int iy = 1; iy < (lenY - 1); iy++)
           {
             if (classification[ix, iy] == 0) continue;
             if (classification[ix, iy + 1] == 0) bounderPixel[ix, iy] |= N;
@@ -371,6 +378,50 @@ namespace Arihara.GuideSmoke
         }
       }
       ftleField = tmp;
+    }
+
+    public void SobelFilter2D()
+    {
+      if (lenZ > 1) return;
+
+      float[,] filterX = {
+        {-1, 0, 1},
+        {-2, 0, 2},
+        {-1, 0, 1},
+      };
+      float[,] filterY = {
+        {-1, -2, -1},
+        {0, 0, 0},
+        {-1, -2, -1},
+      };
+
+      float[,,] tmpX = new float[lenX, lenY, 1];
+      float[,,] tmpY = new float[lenX, lenY, 1];
+
+      for (int ix = 0; ix < lenX; ix++)
+      {
+        for (int iy = 0; iy < lenY; iy++)
+        {
+          for (int fx = -1; fx < 2; fx++)
+          {
+            for (int fy = -1; fy < 2; fy++)
+            {
+              tmpX[ix, iy, 0] += filterX[fx + 1, fy + 1] * GetCoordValue2D(ix + fx, iy + fy);
+              tmpY[ix, iy, 0] += filterY[fx + 1, fy + 1] * GetCoordValue2D(ix + fx, iy + fy);
+            }
+          }
+        }
+      }
+
+      for (int ix = 0; ix < lenX; ix++)
+      {
+        for (int iy = 0; iy < lenY; iy++)
+        {
+          float x = tmpX[ix, iy, 0];
+          float y = tmpY[ix, iy, 0];
+          ftleField[ix, iy, 0] = (float)Math.Sqrt(x * x + y * y);
+        }
+      }
     }
 
     /*

@@ -20,10 +20,10 @@ namespace Arihara.GuideSmoke
     int x_min, x_max, y_min, y_max, z_min, z_max;
 
 
-    int ftleResolution = 128;
+    int ftleResolution = 256;
     int delta_t = 1;
-    int integral_T = 10;
-    float perturbation = 0.3f;
+    int integral_T = 50;
+    float perturbation = 0.5f;
 
     string dataFolderPath;
     int dataNum;
@@ -45,8 +45,9 @@ namespace Arihara.GuideSmoke
     #endregion
 
 
-    public ClearFTLE(string folderPath, int fileNum, int d)
+    public ClearFTLE(string folderPath, int fileNum, int d, int ftlenum)
     {
+      ftleResolution = ftlenum;
       Constructor(folderPath, fileNum, d);
     }
 
@@ -170,13 +171,7 @@ namespace Arihara.GuideSmoke
         }
       }
 
-      for (int ti = 0; ti < integral_T; ti++)
-      {
-        int t0 = t + ti * direction;
-        LoadData(t0);
-      }
-
-      for (int t_integration = 0; t_integration < integral_T - delta_t; t_integration = t_integration + delta_t)
+      for (int t_integration = 0; t_integration < (integral_T / delta_t); t_integration++)
       {
         int t0 = t + t_integration * direction;
         int t1 = t0 + delta_t * direction;
@@ -284,23 +279,20 @@ namespace Arihara.GuideSmoke
 
     Vector3 Trace2D(int t_start, int t_end, float h, Vector3 position)
     {
-      int delta = (t_end - t_start);
+      int delta = Math.Abs((t_end - t_start));
 
-      // Vector3 velocity = Lerp2D(t_start, position);
+      // Vector3 velocity = Lerp2D(t_start, position) * direction;
       Vector3 velocity = RungeKutta(t_start, position);
-      return position + velocity * direction * delta * h;
+      return position + velocity * delta * h;
 
       Vector3 RungeKutta(int t, Vector3 pos)
       {
-        float dt = delta_t * direction;
-        Vector3 k1 = Lerp2D(t, pos);
-        Vector3 x2 = pos + k1 * dt / 2;
-        Vector3 k2 = Lerp2D((int)(t + dt / 2), x2);
-        Vector3 x3 = pos + k2 * dt / 2;
-        Vector3 k3 = Lerp2D((int)(t + dt / 2), x3);
-        Vector3 x4 = pos + k3 * dt;
-        Vector3 k4 = Lerp2D((int)(t + dt), x4);
-        return (k1 + k2 + k3 + k4) / 6;
+        float dt = delta_t;
+        Vector3 v1 = Lerp2D(t, pos) * direction;
+        Vector3 v2 = Lerp2D((int)(t + (dt * direction) / 2), pos + (v1 * dt) / 2) * direction;
+        Vector3 v3 = Lerp2D((int)(t + (dt * direction) / 2), pos + (v2 * dt) / 2) * direction;
+        Vector3 v4 = Lerp2D((int)(t + (dt * direction)), pos + (v3 * dt)) * direction;
+        return (v1 + 2 * v2 + 2 * v3 + v4) / 6;
       }
     }
 
@@ -312,6 +304,7 @@ namespace Arihara.GuideSmoke
       int y0 = (int)Math.Round(y);
 
       if ((x - x_min) * (x - x_max) >= 0 || (y - y_min) * (y - y_max) >= 0) return Vector3.Zero;
+      if (!isLoadFile[t]) LoadData(t);
 
       int x1, y1;
       if ((x - x0) < 0)

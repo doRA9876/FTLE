@@ -16,17 +16,20 @@ namespace Arihara.GuideSmoke
     static void Main(string[] args)
     {
       // Sample();
-      SampleClear();
+      // SampleClear();
+      InteractiveSystem();
       // CalcDataset();
     }
 
     static void SampleClear()
     {
-      // string folderPath = string.Format("./data/ConstVelField_128x128x1");
-      string folderPath = string.Format("./data/ObsSphere_64x64x1_VC");
-      ClearFTLE cFTLE = new ClearFTLE(folderPath, 1000, -1);
+      // string folderPath = string.Format("./data/noVC_256x256x1/velocity");
+      string folderPath = string.Format("./data/Buoyancy_noVC_256x256x1/velocity");
+      ClearFTLE cFTLE = new ClearFTLE(folderPath, 1000, -1, 256);
+      bool isNormalize = false;
+      bool isSkeletonize = true;
 
-      for (int t = 250; t < 651; t += 10)
+      for (int t = 100; t < 951; t += 50)
       {
         Console.WriteLine("Start FTLE Calculation : t = {0}", t);
         cFTLE.CalcFTLE(t);
@@ -34,10 +37,12 @@ namespace Arihara.GuideSmoke
         string outputFTLE = MATLAB_FTLE_Path + '/' + string.Format("ftle-{0}.txt", t);
         string outputLCS = MATLAB_LCS_Path + '/' + string.Format("lcs-{0}.txt", t);
         string outputClassification = string.Format("./data/LCS/class-{0}.txt", t);
-        LCS lcs = new LCS(cFTLE.GetFTLE(t), false);
-        lcs.LcsByHessian(5, 0.01f, 0.5f, false, 20);
+        LCS lcs = new LCS(cFTLE.GetFTLE(t), isNormalize);
+        // lcs.GaussianFilter(1);
+        // lcs.SobelFilter2D();
+        // lcs.LcsByHessian(0.01f, 0.1f, isSkeletonize, 5);
         // lcs.LcsByThreshold();
-        lcs.WriteLCS(outputLCS, cFTLE.GetOriginalPos());
+        // lcs.WriteLCS(outputLCS, cFTLE.GetOriginalPos());
         // lcs.WriteFTLE(outputFTLE, cFTLE.GetOriginalPos());
         // lcs.WriteClasscification(outputClassification, cFTLE.GetOriginalPos());
         cFTLE.WriteFTLE(outputFTLE, t);
@@ -47,13 +52,13 @@ namespace Arihara.GuideSmoke
 
     static void Sample()
     {
-      string folderPath = string.Format("./data/ConstVelField_128x128x1");
-      // string folderPath = string.Format("./data/ObsSphere_64x64x1");
-      FTLE ftle = new FTLE(folderPath, 1000, 1);
-      bool isNormalize = true;
-      bool isSkeletonize = false;
+      string folderPath = string.Format("./data/Buoyancy_VC_256x256x1/velocity");
+      // string folderPath = string.Format("./data/ConstVelField_128x128x1_Wall");
+      FTLE ftle = new FTLE(folderPath, 1000, -1, 256);
+      bool isNormalize = false;
+      bool isSkeletonize = true;
 
-      for (int t = 250; t < 651; t += 10)
+      for (int t = 100; t < 951; t += 50)
       {
         Console.WriteLine("Start FTLE Calculation : t = {0}", t);
         ftle.CalcFTLE(t);
@@ -62,10 +67,12 @@ namespace Arihara.GuideSmoke
         string outputLCS = MATLAB_LCS_Path + '/' + string.Format("lcs-{0}.txt", t);
         string outputClassification = string.Format("./data/LCS/class-{0}.txt", t);
         LCS lcs = new LCS(ftle.GetFTLE(t), isNormalize);
-        lcs.LcsByHessian(0, 0.01f, 0.3f, isSkeletonize, 5);
-        // lcs.LcsByThreshold(0.5f);
-        lcs.WriteLCS(outputLCS, ftle.GetOriginalPos());
+        // lcs.GaussianFilter(5);
+        // lcs.SobelFilter2D();
         // lcs.WriteFTLE(outputFTLE, ftle.GetOriginalPos());
+        // lcs.LcsByHessian(0.01f, 0.1f, isSkeletonize, 10);
+        // lcs.LcsByThreshold(0.5f);
+        // lcs.WriteLCS(outputLCS, ftle.GetOriginalPos());
         // lcs.WriteClasscification(outputClassification, ftle.GetOriginalPos());
         ftle.WriteFTLE(outputFTLE, t);
         Console.WriteLine("End FTLE Calculation");
@@ -79,7 +86,7 @@ namespace Arihara.GuideSmoke
         Console.WriteLine("Start No.{0} Calculation", num);
 
         string folderPath = string.Format("./data/DataSet/DataSet/{0}/velocity", num);
-        FTLE ftle = new FTLE(folderPath, 500, -1); //calculation backward
+        FTLE ftle = new FTLE(folderPath, 500, -1, 128); //calculation backward
         for (int t = 50; t < 500; t += 50)
         {
           Console.WriteLine("Start FTLE Calculation : t = {0}", t);
@@ -91,12 +98,44 @@ namespace Arihara.GuideSmoke
           string outputFTLE = dirFTLE + "/" + string.Format("ftle-{0}.txt", t);
           string outputLCS = dirLCS + "/" + string.Format("lcs-{0}.txt", t);
           LCS lcs = new LCS(ftle.GetFTLE(t), false);
-          lcs.LcsByHessian(5, 0.01f, 0.5f, true, 20);
+          lcs.GaussianFilter(5);
+          lcs.LcsByHessian(0.01f, 0.5f, true, 20);
           lcs.WriteLCS(outputLCS, ftle.GetOriginalPos());
           ftle.WriteFTLE(outputFTLE, t);
           Console.WriteLine("End FTLE Calculation");
         }
         Console.WriteLine("End No.{0} Calculation", num);
+      }
+    }
+
+    static void InteractiveSystem()
+    {
+      string input;
+      Console.Write("Data Path ? : ");
+      input = Console.ReadLine();
+      string folderPath = input;
+      ClearFTLE cFTLE = new ClearFTLE(folderPath, 1000, -1, 256);
+      bool isNormalize = false;
+      bool isSkeletonize = true;
+
+      for (int t = 100; t < 951; t += 50)
+      {
+        Console.WriteLine("Start FTLE Calculation : t = {0}", t);
+        cFTLE.CalcFTLE(t);
+        // ftle.ShowFTLE(t);
+        string outputFTLE = MATLAB_FTLE_Path + '/' + string.Format("ftle-{0}.txt", t);
+        string outputLCS = MATLAB_LCS_Path + '/' + string.Format("lcs-{0}.txt", t);
+        string outputClassification = string.Format("./data/LCS/class-{0}.txt", t);
+        LCS lcs = new LCS(cFTLE.GetFTLE(t), isNormalize);
+        // lcs.GaussianFilter(1);
+        // lcs.SobelFilter2D();
+        // lcs.LcsByHessian(0.01f, 0.1f, isSkeletonize, 5);
+        // lcs.LcsByThreshold();
+        // lcs.WriteLCS(outputLCS, cFTLE.GetOriginalPos());
+        // lcs.WriteFTLE(outputFTLE, cFTLE.GetOriginalPos());
+        // lcs.WriteClasscification(outputClassification, cFTLE.GetOriginalPos());
+        cFTLE.WriteFTLE(outputFTLE, t);
+        Console.WriteLine("End FTLE Calculation");
       }
     }
   }
