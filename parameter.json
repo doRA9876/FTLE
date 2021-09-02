@@ -1,0 +1,19 @@
+{
+  "dataPath": "./data/SteadyVel_noVC_256x256x1/velocity",
+  "outputFTLEPath": "D:/Projects/MATLAB/FTLE/results",
+  "outputLCSPath": "D:/Projects/MATLAB/LCS/results",
+  "startT" : 100,
+  "endT" : 900,
+  "integralT" : 50,
+  "ftleResolution": 256,
+  "direction": -1,
+  "skeletonizeNum": 20,
+  "gaussianNum": 1,
+  "sobelNum": 0,
+  "LcsMethod": 0,
+  "isLcsCalculation": true,
+  "isNormalize": true,
+  "isSkeletonize": true,
+  "lcsThreshold": 0.5,
+  "kappa": 0.01
+}

@@ -424,37 +424,6 @@ namespace Arihara.GuideSmoke
       }
     }
 
-    /*
-    private float[,] EdgeFilter2D()
-    {
-      float[,] filterX = {
-        {-1, 0, 1},
-        {-2, 0, 2},
-        {-1, 0, 1},
-      };
-      float[,] filterY = {
-        {-1, -2, -1},
-        { 0,  0,  0},
-        {1, 2, 1},
-      };
-
-      float[,] tmpX = new float[lenX, lenY];
-      for (int ix = 0; ix < lenX; ix++)
-      {
-        for (int iy = 0; iy < lenY; iy++)
-        {
-          for (int fx = -1; fx < 2; fx++)
-          {
-            for (int fy = -1; fy < 2; fy++)
-            {
-              tmpX[ix, iy] += filterX[fx + 1, fy + 1] * GetCoordValue2D(ix + fx, iy + fy);
-            }
-          }
-        }
-      }
-    }
-    */
-
     private float GetCoordValue2D(int ix, int iy)
     {
       if ((ix * (ix - lenX)) >= 0 || (iy * (iy - lenY)) >= 0) return 0;
