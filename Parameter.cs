@@ -3,21 +3,16 @@ namespace Arihara.GuideSmoke
   public class Parameter
   {
     public string dataPath { get; set; }
-    public string outputFTLEPath { get; set; }
-    public string outputLCSPath { get; set; }
-    public int startT { get; set; }
-    public int endT { get; set; }
-    public int integralT { get; set; }
-    public int ftleResolution { get; set; }
-    public int direction { get; set; }
-    public int skeletonizeNum { get; set; }
-    public int gaussianNum { get; set; }
-    public int sobelNum { get; set; }
-    public int LcsMethod { get; set; }
-    public bool isLcsCalculation { get; set; }
-    public bool isNormalize { get; set; }
-    public bool isSkeletonize { get; set; }
-    public float lcsThreshold { get; set; }
-    public float kappa { get; set; }
+    public string outFTLEPath { get; set; }
+    public int dataNum{ get; set; }
+    public int startFrame { get; set; }
+    public int endFrame { get; set; }
+    public int integralFrame { get; set; }
+    public float deltaT{ get; set; }
+    public int ftleResolutionX { get; set; }
+    public int ftleResolutionY { get; set; }
+    public int ftleResolutionZ { get; set; }
+    public string direction{ get; set; }
+    public float tau{ get; set; }
   }
 }
