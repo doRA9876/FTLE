@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using System.Text.Json;
+using System.Text;
 using System.Numerics;
 
 
@@ -13,59 +15,100 @@ namespace Arihara.GuideSmoke
   {
     static void Main(string[] args)
     {
-      CalcDataset();
+      Console.Write("Interactive System (0) or From json calculation (1) ? : ");
+      string input = Console.ReadLine();
+      int select = int.Parse(input);
+
+      switch (select)
+      {
+        case 1:
+          FromJsonCalculation();
+          break;
+
+        default:
+          InteractiveSystem();
+          break;
+      }
+
     }
 
-    static void Sample()
+    static void FromJsonCalculation()
     {
-      string folderPath = string.Format("./data/ObsSphere_64x64x1");
-      FTLE ftle = new FTLE(folderPath, 1000, -1);
+      Parameter parameter = ReadJson("./parameter.json");
+      CalculationByParameter(parameter);
+    }
 
-      for (int t = 200; t < 601; t += 50)
+    static void InteractiveSystem()
+    {
+      Parameter p = new Parameter();
+
+      string input_str;
+      Console.Write("Data Path ? : ");
+      input_str = Console.ReadLine();
+      p.dataPath = input_str;
+
+      Console.Write("Data Number ? : ");
+      input_str = Console.ReadLine();
+      p.dataNum = int.Parse(input_str);
+
+      Console.Write("FTLE Resolution X ? : ");
+      input_str = Console.ReadLine();
+      p.ftleResolutionX = int.Parse(input_str);
+
+      Console.Write("FTLE Resolution Y ? : ");
+      input_str = Console.ReadLine();
+      p.ftleResolutionY = int.Parse(input_str);
+
+      Console.Write("FTLE Resolution Z ? : ");
+      input_str = Console.ReadLine();
+      p.ftleResolutionZ = int.Parse(input_str);
+
+      ConsoleKeyInfo keyInfo;
+      Console.Write("Backward Integration(Y / n) ? :");
+      keyInfo = Console.ReadKey();
+      Console.WriteLine();
+      if (keyInfo.KeyChar == 'n')
+      {
+        p.direction = "Forward";
+        Console.WriteLine("Forward Integration");
+      }
+      else
+      {
+        p.direction = "Backward";
+        Console.WriteLine("Backward Integration");
+      }
+
+      CalculationByParameter(p);
+    }
+
+    static void CalculationByParameter(Parameter p)
+    {
+      FTLE ftle = new FTLE(p.dataPath, p.dataNum, p.deltaT, p.ftleResolutionX, p.ftleResolutionY, p.ftleResolutionZ);
+      for (int t = p.startFrame; t <= p.endFrame; t += p.integralFrame)
       {
         Console.WriteLine("Start FTLE Calculation : t = {0}", t);
-        ftle.CalcFTLE(t);
-        // ftle.ShowFTLE(t);
-        string outputFTLE = string.Format("./data/FTLE/ftle-{0}.txt", t);
-        string outputLCS = string.Format("./data/LCS/lcs-{0}.txt", t);
+        ftle.CalcFTLE(t, p.direction, p.integralFrame, p.tau);
+        string outputFTLEFile = p.outFTLEPath + '/' + string.Format("ftle-{0}.txt", t);
         string outputClassification = string.Format("./data/LCS/class-{0}.txt", t);
-        LCS lcs = new LCS(ftle.GetFTLE(t), false);
-        lcs.LcsByHessian(5, 0.01f, 0.5f, true, 20);
-        // lcs.LcsByThreshold();
-        lcs.WriteLCS(outputLCS, ftle.GetOriginalPos());
-        lcs.WriteFTLE(outputFTLE, ftle.GetOriginalPos());
-        lcs.WriteClasscification(outputClassification, ftle.GetOriginalPos());
-        ftle.WriteFTLE(outputFTLE, t);
+        ftle.WriteFTLE(outputFTLEFile, t);
         Console.WriteLine("End FTLE Calculation");
       }
     }
 
-    static void CalcDataset()
+    static Parameter ReadJson(string filePath)
     {
-      for (int num = 1; num <= 1000; num++)
+      string jsonStr;
+      using (StreamReader sr = new StreamReader(filePath, Encoding.GetEncoding("utf-8")))
       {
-        Console.WriteLine("Start No.{0} Calculation", num);
-
-        string folderPath = string.Format("./data/DataSet/DataSet/{0}/velocity", num);
-        FTLE ftle = new FTLE(folderPath, 500, -1); //calculation backward
-        for (int t = 50; t < 500; t+=50)
-        {
-          Console.WriteLine("Start FTLE Calculation : t = {0}", t);
-          string dirFTLE = string.Format("./data/DataSet/FTLE/{0}", num);
-          string dirLCS = string.Format("./data/DataSet/LCS/{0}", num);
-          Directory.CreateDirectory(dirFTLE);
-          Directory.CreateDirectory(dirLCS);
-          ftle.CalcFTLE(t);
-          string outputFTLE = dirFTLE + "/" + string.Format("ftle-{0}.txt", t);
-          string outputLCS = dirLCS + "/" + string.Format("lcs-{0}.txt", t);
-          LCS lcs = new LCS(ftle.GetFTLE(t), false);
-          lcs.LcsByHessian(5, 0.01f, 0.5f, true, 20);
-          lcs.WriteLCS(outputLCS, ftle.GetOriginalPos());
-          ftle.WriteFTLE(outputFTLE, t);
-          Console.WriteLine("End FTLE Calculation");
-        }
-        Console.WriteLine("End No.{0} Calculation", num);
+        jsonStr = sr.ReadToEnd();
       }
+
+      Console.WriteLine(jsonStr);
+
+      Parameter parameter = new Parameter();
+      parameter = JsonSerializer.Deserialize<Parameter>(jsonStr);
+
+      return parameter;
     }
   }
 }
