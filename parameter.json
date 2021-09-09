@@ -1,0 +1,14 @@
+{
+  "dataPath": "./data/Buoyancy_noVC_256x256x1/velocity",
+  "outFTLEPath": "D:/Projects/MATLAB/FTLE/results",
+  "dataNum": 1000,
+  "startFrame": 200,
+  "endFrame": 900,
+  "integralFrame": 50,
+  "deltaT":0.1,
+  "ftleResolutionX": 256,
+  "ftleResolutionY": 256,
+  "ftleResolutionZ": 1,
+  "direction": "Backward",
+  "tau":0.5
+}
