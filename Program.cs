@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Text.Json;
 using System.Text;
@@ -15,7 +15,7 @@ namespace Arihara.GuideSmoke
   {
     static void Main(string[] args)
     {
-      Console.Write("Interactive System (0) or From json calculation (1) ? : ");
+      Console.Write("Interactive System (0), From json calculation (1) or Dataset Constraction (2) ? : ");
       string input = Console.ReadLine();
       int select = int.Parse(input);
 
@@ -23,6 +23,10 @@ namespace Arihara.GuideSmoke
       {
         case 1:
           FromJsonCalculation();
+          break;
+
+        case 2:
+          ConstractDataset();
           break;
 
         default:
@@ -79,6 +83,37 @@ namespace Arihara.GuideSmoke
       }
 
       CalculationByParameter(p);
+    }
+
+    static void ConstractDataset()
+    {
+      int datasetNum = 2000;
+      string baseFolder = @"D:\Projects\CS\FTLE\data\RawData\Dataset";
+      for (int i = 1; i <= datasetNum; i++)
+      {
+        string resultsFolder = baseFolder + '/' + $"{i}";
+        Directory.CreateDirectory(resultsFolder);
+
+        string path = baseFolder + '/' + $"{i}/velocity";
+        Calculation(10, 0.5f);
+        Calculation(25, 0.5f);
+        Calculation(50, 0.5f);
+        Calculation(10, 1.0f);
+        Calculation(25, 1.0f);
+        Calculation(50, 1.0f);
+
+        void Calculation(int T, float tau)
+        {
+          using (FTLE ftle = new FTLE(path, 1000, 0.1f, 256, 256, 1))
+          {
+            Console.WriteLine($"Start FTLE Calculation : No.{i}, IntegralFrame : T={T}, Perturbation : tau={tau}");
+            ftle.CalcFTLE(999, "Backward", T, tau);
+            string outFTLEFile = resultsFolder + '/' + $"t-999_T{T}_tau{tau}.txt";
+            ftle.WriteFTLE(outFTLEFile, 999);
+            Console.WriteLine("End FTLE Calculation");
+          }
+        }
+      }
     }
 
     static void CalculationByParameter(Parameter p)

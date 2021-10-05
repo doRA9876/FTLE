@@ -3,7 +3,7 @@ using System.Numerics;
 
 namespace Arihara.GuideSmoke
 {
-  public class FTLE
+  public class FTLE : IDisposable
   {
     private int direction = 0;
     private int dimension = 2;
@@ -57,11 +57,11 @@ namespace Arihara.GuideSmoke
         isLoadFile[n] = false;
       }
 
-      LoadData(0);
+      LoadData(fileNum - 1);
       x_min = 0; y_min = 0; z_min = 0;
-      x_max = velocityField[0].GetLength(0) - 1;
-      y_max = velocityField[0].GetLength(1) - 1;
-      z_max = velocityField[0].GetLength(2) - 1;
+      x_max = velocityField[fileNum - 1].GetLength(0) - 1;
+      y_max = velocityField[fileNum - 1].GetLength(1) - 1;
+      z_max = velocityField[fileNum - 1].GetLength(2) - 1;
 
       if (z_max == 0) dimension = 2;
       if (z_max > 0) dimension = 3;
@@ -70,9 +70,9 @@ namespace Arihara.GuideSmoke
     public void CalcFTLE(int t, string d, int integralF, float pt)
     {
       direction = 0;
-      if(string.Equals(d, "Forward")) direction = 1;
-      if(string.Equals(d, "Backward")) direction = -1;
-      if(direction == 0) 
+      if (string.Equals(d, "Forward")) direction = 1;
+      if (string.Equals(d, "Backward")) direction = -1;
+      if (direction == 0)
       {
         Console.WriteLine($"Specified direction (d = {d}) is incorrect");
         return;
@@ -96,7 +96,7 @@ namespace Arihara.GuideSmoke
 
     public void WriteFTLE(string path, int t)
     {
-      if (!isCalculatedTime[t]) 
+      if (!isCalculatedTime[t])
       {
         Console.WriteLine($"Specified time (t = {t} has not been calculated.");
         return;
@@ -327,5 +327,7 @@ namespace Arihara.GuideSmoke
       return v00 + (v10 - v00) / dx * delta_x + (v01 - v00) / dy * delta_y;
     }
     #endregion
+
+    public void Dispose() { }
   }
 }
