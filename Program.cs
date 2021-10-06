@@ -125,10 +125,14 @@ namespace Arihara.GuideSmoke
         ftle.CalcFTLE(t, p.direction, p.integralFrame, p.tau);
         string outputFTLEFile = p.outFTLEPath + '/' + string.Format("ftle-{0}.txt", t);
         string outputClassification = string.Format("./data/LCS/class-{0}.txt", t);
-        ftle.WriteFTLE(outputFTLEFile, t);
+        ftle.WriteFTLE(@$"D:\Projects\CS\FTLE\data\RawData\Sample\FTLE\ftle-{t}.txt", t);
+
         float[,,] ftleField = ftle.GetFTLE(t);
         FluidRegion fr = new FluidRegion(ref ftleField, @"D:\Projects\CS\FTLE\data\RawData\Sample\density", t - p.integralFrame, t, 256, 256, 1);
-        fr.ShowDensity();
+        fr.Integrate();
+        ftleField = fr.FTLEField;
+        FileIO.WriteFTLEFile(@$"D:\Projects\CS\FTLE\data\RawData\Sample\FTLE\ftleRev-{t}.txt", ftleField, 256, 256, 1);
+
         Console.WriteLine("End FTLE Calculation");
       }
     }

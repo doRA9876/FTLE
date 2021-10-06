@@ -1,9 +1,9 @@
 {
-  "dataPath": "./data/RawData/Buoyancy_noVC_256x256x1/velocity",
+  "dataPath": "./data/RawData/Sample/velocity",
   "outFTLEPath": "data/FTLE/results",
   "dataNum": 1000,
-  "startFrame": 950,
-  "endFrame": 975,
+  "startFrame": 925,
+  "endFrame": 999,
   "integralFrame": 25,
   "deltaT":0.1,
   "ftleResolutionX": 256,
