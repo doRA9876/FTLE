@@ -50,7 +50,54 @@ namespace Arihara.GuideSmoke
         int z = int.Parse(datas[i][2]);
         velocityField[x, y, z] = new Vector3(float.Parse(datas[i][3]), float.Parse(datas[i][4]), float.Parse(datas[i][5]));
       }
+      return true;
+    }
 
+    public static bool LoadDensityFile(string path, ref float[,,] density)
+    {
+      if (!File.Exists(path))
+      {
+        Console.WriteLine("Target File \"{0}\" is not exists.", path);
+        density = null;
+        return false;
+      }
+
+      string fileData = string.Empty;
+      using (StreamReader sr = new StreamReader(path))
+      {
+        fileData = sr.ReadToEnd();
+      }
+      fileData = fileData.Replace(" ", "");
+      fileData = fileData.Replace("[", "");
+      fileData = fileData.Replace("]", "");
+      fileData = fileData.Replace("=", ",");
+      string[] culums = fileData.Split('\n');
+      string[][] datas = new string[culums.Length - 1][];
+      for (int i = 0; i < culums.Length - 1; i++)
+      {
+        datas[i] = culums[i].Split(',');
+      }
+
+      int maxX = 0, maxY = 0, maxZ = 0;
+      for (int i = 0; i < culums.Length - 1; i++)
+      {
+        int x = int.Parse(datas[i][0]);
+        int y = int.Parse(datas[i][1]);
+        int z = int.Parse(datas[i][2]);
+        if (maxX < x) maxX = x;
+        if (maxY < y) maxY = y;
+        if (maxZ < z) maxZ = z;
+      }
+      maxX += 1; maxY += 1; maxZ += 1;
+
+      density = new float[maxX, maxY, maxZ];
+      for (int i = 0; i < culums.Length - 1; i++)
+      {
+        int x = int.Parse(datas[i][0]);
+        int y = int.Parse(datas[i][1]);
+        int z = int.Parse(datas[i][2]);
+        density[x, y, z] = float.Parse(datas[i][3]);
+      }
       return true;
     }
 
@@ -86,6 +133,8 @@ namespace Arihara.GuideSmoke
 
       return true;
     }
+
+    
 
     public static void WriteFTLEFile(string path, Vector3[,,] pos, float[,,] ftleField, int lenX, int lenY, int lenZ)
     {
